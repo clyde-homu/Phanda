@@ -1,0 +1,14 @@
+{
+  "name": "phanda",
+  "version": "0.0.1",
+  "description": "phanda",
+  "author": "Clyde Homu <clyde.homu@etgworld.com>",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0"
+  }
+}
