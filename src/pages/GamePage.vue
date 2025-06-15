@@ -22,7 +22,6 @@
       <!-- Crossword Grid -->
       <div class="crossword-section">
         <CrosswordGrid
-          :grid="currentLevel?.crosswordGrid || []"
           :target-words="currentLevel?.targetWords || []"
           :found-words="foundWords"
           class="crossword-grid"
@@ -37,6 +36,7 @@
           @letter-selected="handleLetterSelection"
           @word-submitted="handleWordSubmission"
           @letters-cleared="handleLettersClear"
+          @shuffle-letters="shuffleLetters"
           class="letter-circle"
         />
       </div>
@@ -47,7 +47,7 @@
           round
           color="orange"
           icon="lightbulb"
-          size="lg"
+          size="md"
           @click="showHints"
           class="hint-button"
         >
@@ -56,20 +56,9 @@
 
         <q-btn
           round
-          color="purple"
-          icon="shuffle"
-          size="lg"
-          @click="shuffleLetters"
-          class="shuffle-button"
-        >
-          <q-tooltip>Shuffle letters</q-tooltip>
-        </q-btn>
-
-        <q-btn
-          round
           color="red"
           icon="clear"
-          size="lg"
+          size="md"
           @click="clearSelection"
           :disable="connectedLetterIndices.length === 0"
           class="clear-button"
@@ -155,6 +144,7 @@ const showSuccessDialog = ref(false);
 const showWordFoundDialog = ref(false);
 const showHintDialog = ref(false);
 const lastFoundWord = ref('');
+
 
 const goBack = async () => {
   gameStore.resetGame();
@@ -271,7 +261,7 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 16px 20px;
   background: rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
 }
@@ -289,7 +279,7 @@ watch(
 .level-title {
   font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .progress-info {
@@ -313,41 +303,21 @@ watch(
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  gap: 10px;
+  padding: 20px 10px 10px;
+  gap: 20px;
   align-items: center;
   justify-content: space-between;
   min-height: 0;
 }
 
 .crossword-section {
+  position: relative;
   flex-shrink: 0;
-}
-
-.current-word-section {
-  text-align: center;
-  color: white;
-  min-height: 50px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.current-word {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-bottom: 5px;
-  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.word-length {
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
 
 .letter-circle-section {
   flex: 1;
@@ -360,16 +330,15 @@ watch(
 
 .action-buttons {
   display: flex;
-  gap: 15px;
+  gap: 20px;
   flex-shrink: 0;
   padding-bottom: 10px;
 }
 
 .hint-button,
-.shuffle-button,
 .clear-button {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
 }
 
 .success-card {
@@ -438,28 +407,23 @@ watch(
 
 @media (max-width: 480px) {
   .game-content {
-    padding: 8px;
-    gap: 8px;
+    padding: 15px 8px 8px;
+    gap: 15px;
   }
 
   .action-buttons {
-    gap: 12px;
+    gap: 15px;
   }
 
   .hint-button,
-  .shuffle-button,
   .clear-button {
     width: 45px;
     height: 45px;
   }
 
-  .current-word {
-    font-size: 1.4rem;
-  }
 
   .crossword-grid {
-    padding: 8px;
-    max-height: 25vh;
+    max-height: 30vh;
   }
 }
 </style>

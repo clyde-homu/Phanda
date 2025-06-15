@@ -1,22 +1,24 @@
 <template>
   <div class="crossword-grid">
-    <div class="grid-container">
-      <div v-for="(row, rowIndex) in displayGrid" :key="rowIndex" class="grid-row">
-        <div
-          v-for="(cell, colIndex) in row"
-          :key="colIndex"
-          class="grid-cell"
-          :class="{
-            'cell-filled': cell.letter,
-            'cell-revealed': cell.isRevealed,
-            'cell-animated': animatedCells.includes(`${rowIndex}-${colIndex}`),
-            'cell-empty': !cell.letter && !cell.isPlaceholder,
-          }"
-        >
-          <div class="cell-content">
-            <span v-if="cell.letter" class="cell-letter">{{ cell.letter }}</span>
-            <div v-if="cell.number" class="cell-number">{{ cell.number }}</div>
+    <div class="grid-container" :style="gridContainerStyle">
+      <div 
+        v-for="cell in optimizedCells" 
+        :key="cell.id"
+        class="crossword-cell"
+        :class="{
+          'cell-revealed': cell.isRevealed,
+          'cell-intersection': cell.isIntersection,
+          'cell-animated': animatedCells.includes(cell.id),
+          'cell-word-complete': cell.isWordComplete
+        }"
+        :style="cell.position"
+      >
+        <div class="cell-content">
+          <div v-if="cell.number" class="cell-number">{{ cell.number }}</div>
+          <div class="cell-letter" :class="{ 'letter-revealed': cell.isRevealed }">
+            {{ cell.isRevealed ? cell.letter : '' }}
           </div>
+          <div v-if="cell.isIntersection" class="intersection-glow"></div>
         </div>
       </div>
     </div>
@@ -25,121 +27,264 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { CrosswordCell } from '../stores/game-store';
 
 interface Props {
-  grid: CrosswordCell[][];
   targetWords: string[];
   foundWords: string[];
 }
 
-interface DisplayCell extends CrosswordCell {
-  isPlaceholder?: boolean;
-  number?: number | undefined;
+interface OptimizedCell {
+  id: string;
+  letter: string;
+  isRevealed: boolean;
+  isIntersection: boolean;
+  isWordComplete: boolean;
+  wordIds: number[];
+  position: {
+    gridRow?: number;
+    gridColumn?: number;
+    '--grid-row'?: number;
+    '--grid-column'?: number;
+    transform?: string;
+  };
+  number?: number;
+}
+
+interface WordLayout {
+  word: string;
+  direction: 'horizontal' | 'vertical';
+  startRow: number;
+  startCol: number;
+  cells: OptimizedCell[];
 }
 
 const props = defineProps<Props>();
-
 const animatedCells = ref<string[]>([]);
 
-const displayGrid = computed(() => {
-  if (!props.grid || props.grid.length === 0) return [];
+// Create optimized crossword layout
+const optimizedCells = computed(() => {
+  if (!props.targetWords || props.targetWords.length === 0) return [];
 
-  // Create a larger grid to accommodate all words properly
-  const maxRows = Math.max(props.grid.length, 6);
-  const maxCols = Math.max(...props.grid.map((row) => row.length), 8);
+  const words = [...props.targetWords];
+  const wordLayouts: WordLayout[] = [];
+  const cellMap = new Map<string, OptimizedCell>();
 
-  const grid: DisplayCell[][] = Array(maxRows)
-    .fill(null)
-    .map(() =>
-      Array(maxCols)
-        .fill(null)
-        .map(() => ({
-          letter: null,
-          isRevealed: false,
-          wordIndex: -1,
-          cellIndex: -1,
-          isPlaceholder: true,
-        })),
-    );
-
-  // Place words in the grid
-  props.targetWords.forEach((word, wordIndex) => {
-    const isFound = props.foundWords.includes(word);
-
-    if (wordIndex === 0) {
-      // First word - horizontal
-      const startRow = 1;
-      const startCol = 1;
+  // Smart word placement algorithm
+  const findBestIntersection = (word: string | undefined, placedLayouts: WordLayout[]) => {
+    if (!word) return null;
+    for (const layout of placedLayouts) {
       for (let i = 0; i < word.length; i++) {
-        const targetCol = startCol + i;
-        if (targetCol < maxCols && grid[startRow] && grid[startRow][targetCol]) {
-          grid[startRow][targetCol] = {
-            letter: isFound ? (word[i] ?? null) : null,
-            isRevealed: isFound,
-            wordIndex,
-            cellIndex: i,
-            isPlaceholder: false,
-            number: i === 0 ? wordIndex + 1 : undefined,
-          };
-        }
-      }
-    } else if (wordIndex === 1) {
-      // Second word - vertical, intersecting with first
-      const startRow = 0;
-      const startCol = 2;
-      for (let i = 0; i < word.length; i++) {
-        const targetRow = startRow + i;
-        if (targetRow < maxRows && grid[targetRow] && grid[targetRow][startCol]) {
-          grid[targetRow][startCol] = {
-            letter: isFound ? (word[i] ?? null) : null,
-            isRevealed: isFound,
-            wordIndex,
-            cellIndex: i,
-            isPlaceholder: false,
-            number: i === 0 ? wordIndex + 1 : undefined,
-          };
-        }
-      }
-    } else {
-      // Additional words - place them in available spots
-      const startRow = Math.min(wordIndex, maxRows - 1);
-      const startCol = 0;
-      for (let i = 0; i < word.length && startCol + i < maxCols; i++) {
-        const targetCol = startCol + i;
-        if (grid[startRow] && grid[startRow][targetCol]) {
-          grid[startRow][targetCol] = {
-            letter: isFound ? (word[i] ?? null) : null,
-            isRevealed: isFound,
-            wordIndex,
-            cellIndex: i,
-            isPlaceholder: false,
-            number: i === 0 ? wordIndex + 1 : undefined,
-          };
+        for (let j = 0; j < layout.word.length; j++) {
+          if (word[i] === layout.word[j]) {
+            return {
+              wordIndex: i,
+              layoutIndex: j,
+              layout,
+              char: word[i]
+            };
+          }
         }
       }
     }
-  });
+    return null;
+  };
 
-  return grid;
+  // Place first word horizontally at center
+  if (words[0]) {
+    const firstWord = words[0];
+    const layout: WordLayout = {
+      word: firstWord,
+      direction: 'horizontal',
+      startRow: 3,
+      startCol: 1,
+      cells: []
+    };
+    
+    for (let i = 0; i < firstWord.length; i++) {
+      const cellId = `${layout.startRow}-${layout.startCol + i}`;
+      const cell: OptimizedCell = {
+        id: cellId,
+        letter: firstWord[i] || '',
+        isRevealed: props.foundWords.includes(firstWord),
+        isIntersection: false,
+        isWordComplete: props.foundWords.includes(firstWord),
+        wordIds: [0],
+        position: {
+          '--grid-row': layout.startRow,
+          '--grid-column': layout.startCol + i,
+          gridRow: layout.startRow,
+          gridColumn: layout.startCol + i
+        },
+        ...(i === 0 && { number: 1 })
+      };
+      
+      layout.cells.push(cell);
+      cellMap.set(cellId, cell);
+    }
+    
+    wordLayouts.push(layout);
+  }
+
+  // Place remaining words with intersections
+  for (let wordIndex = 1; wordIndex < words.length; wordIndex++) {
+    const word = words[wordIndex];
+    if (!word) continue;
+    const intersection = findBestIntersection(word, wordLayouts);
+    
+    if (intersection) {
+      const { wordIndex: wIdx, layoutIndex: lIdx, layout } = intersection;
+      const direction = layout.direction === 'horizontal' ? 'vertical' : 'horizontal';
+      
+      let startRow, startCol;
+      if (direction === 'vertical') {
+        startRow = layout.startRow - wIdx;
+        startCol = layout.startCol + lIdx;
+      } else {
+        startRow = layout.startRow + lIdx;
+        startCol = layout.startCol - wIdx;
+      }
+      
+      const newLayout: WordLayout = {
+        word,
+        direction,
+        startRow,
+        startCol,
+        cells: []
+      };
+      
+      for (let i = 0; i < word.length; i++) {
+        const row = direction === 'horizontal' ? startRow : startRow + i;
+        const col = direction === 'horizontal' ? startCol + i : startCol;
+        const cellId = `${row}-${col}`;
+        
+        let cell = cellMap.get(cellId);
+        if (cell) {
+          // This is an intersection
+          cell.isIntersection = true;
+          cell.wordIds.push(wordIndex);
+          if (props.foundWords.includes(word)) {
+            cell.isRevealed = true;
+            cell.isWordComplete = true;
+          }
+        } else {
+          // New cell
+          cell = {
+            id: cellId,
+            letter: word[i] || '',
+            isRevealed: props.foundWords.includes(word),
+            isIntersection: false,
+            isWordComplete: props.foundWords.includes(word),
+            wordIds: [wordIndex],
+            position: {
+              '--grid-row': row,
+              '--grid-column': col,
+              gridRow: row,
+              gridColumn: col
+            },
+            ...(i === 0 && { number: wordIndex + 1 })
+          };
+          cellMap.set(cellId, cell);
+        }
+        
+        if (cell) {
+          newLayout.cells.push(cell);
+        }
+      }
+      
+      wordLayouts.push(newLayout);
+    } else {
+      // Place word separately if no intersection found
+      const direction = wordIndex % 2 === 0 ? 'horizontal' : 'vertical';
+      const offset = Math.floor(wordIndex / 2) * 2;
+      
+      const layout: WordLayout = {
+        word,
+        direction,
+        startRow: direction === 'horizontal' ? 1 + offset : 1,
+        startCol: direction === 'horizontal' ? 1 : 5 + offset,
+        cells: []
+      };
+      
+      for (let i = 0; i < word.length; i++) {
+        const row = direction === 'horizontal' ? layout.startRow : layout.startRow + i;
+        const col = direction === 'horizontal' ? layout.startCol + i : layout.startCol;
+        const cellId = `${row}-${col}`;
+        
+        const cell: OptimizedCell = {
+          id: cellId,
+          letter: word[i] || '',
+          isRevealed: props.foundWords.includes(word),
+          isIntersection: false,
+          isWordComplete: props.foundWords.includes(word),
+          wordIds: [wordIndex],
+          position: {
+            '--grid-row': row,
+            '--grid-column': col,
+            gridRow: row,
+            gridColumn: col
+          },
+          ...(i === 0 && { number: wordIndex + 1 })
+        };
+        
+        layout.cells.push(cell);
+        cellMap.set(cellId, cell);
+      }
+      
+      wordLayouts.push(layout);
+    }
+  }
+
+  return Array.from(cellMap.values());
+});
+
+// Dynamic grid container style
+const gridContainerStyle = computed(() => {
+  const cells = optimizedCells.value;
+  if (cells.length === 0) return {};
+
+  // Calculate grid bounds
+  const minRow = Math.min(...cells.map(c => c.position.gridRow || c.position['--grid-row'] || 1));
+  const maxRow = Math.max(...cells.map(c => c.position.gridRow || c.position['--grid-row'] || 1));
+  const minCol = Math.min(...cells.map(c => c.position.gridColumn || c.position['--grid-column'] || 1));
+  const maxCol = Math.max(...cells.map(c => c.position.gridColumn || c.position['--grid-column'] || 1));
+  
+  const gridRows = maxRow - minRow + 1;
+  const gridCols = maxCol - minCol + 1;
+
+  // Dynamic cell sizing
+  const maxDimension = Math.max(gridRows, gridCols);
+  let cellSize = 50;
+  
+  if (maxDimension > 6) cellSize = 45;
+  if (maxDimension > 8) cellSize = 40;
+  if (maxDimension > 10) cellSize = 35;
+
+  return {
+    '--cell-size': `${cellSize}px`,
+    '--grid-rows': gridRows,
+    '--grid-cols': gridCols,
+    '--min-row': minRow,
+    '--min-col': minCol,
+  };
 });
 
 const animateWordReveal = (word: string) => {
   const wordIndex = props.targetWords.indexOf(word);
   if (wordIndex === -1) return;
 
-  // Find all cells for this word and animate them
-  displayGrid.value.forEach((row, rowIndex) => {
-    row.forEach((cell, colIndex) => {
-      if (cell.wordIndex === wordIndex) {
-        const cellKey = `${rowIndex}-${colIndex}`;
-        animatedCells.value.push(cellKey);
-
-        setTimeout(() => {
-          animatedCells.value = animatedCells.value.filter((key) => key !== cellKey);
-        }, 600);
-      }
-    });
+  // Find all cells for this word and animate them with stagger
+  const wordCells = optimizedCells.value.filter(cell => 
+    cell.wordIds.includes(wordIndex)
+  );
+  
+  wordCells.forEach((cell, index) => {
+    setTimeout(() => {
+      animatedCells.value.push(cell.id);
+      
+      setTimeout(() => {
+        animatedCells.value = animatedCells.value.filter(id => id !== cell.id);
+      }, 800);
+    }, index * 100); // Staggered animation
   });
 };
 
@@ -160,54 +305,78 @@ watch(
 .crossword-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 400px;
-  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
 }
 
 .grid-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 12px;
-}
-
-.grid-row {
-  display: flex;
-  gap: 2px;
-}
-
-.grid-cell {
   position: relative;
-  width: 35px;
-  height: 35px;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  display: grid;
+  grid-template-rows: repeat(var(--grid-rows, 8), var(--cell-size, 50px));
+  grid-template-columns: repeat(var(--grid-cols, 8), var(--cell-size, 50px));
+  gap: 3px;
+  padding: 25px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.cell-empty {
-  background: transparent;
-  border: none;
+.crossword-cell {
+  position: relative;
+  width: var(--cell-size, 50px);
+  height: var(--cell-size, 50px);
+  grid-row: calc(var(--grid-row, 1) - var(--min-row, 0) + 1);
+  grid-column: calc(var(--grid-column, 1) - var(--min-col, 0) + 1);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+  overflow: hidden;
 }
 
-.cell-filled {
-  background: white;
-  border-color: #333;
+.crossword-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.crossword-cell:hover::before {
+  opacity: 1;
 }
 
 .cell-revealed {
-  background: linear-gradient(45deg, #e8f5e8, #c8e6c9);
-  border-color: #4caf50;
-  color: #2e7d32;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(56, 142, 60, 0.8));
+  border-color: rgba(76, 175, 80, 0.8);
+  box-shadow: 
+    0 4px 20px rgba(76, 175, 80, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: scale(1.02);
+}
+
+.cell-intersection {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 152, 0, 0.8));
+  border-color: rgba(255, 193, 7, 0.8);
+  box-shadow: 
+    0 4px 20px rgba(255, 193, 7, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.cell-word-complete {
+  animation: wordComplete 0.6s ease-out;
 }
 
 .cell-animated {
-  animation: cellReveal 0.6s ease-out;
+  animation: cellReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cell-content {
@@ -217,150 +386,132 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 2;
 }
 
 .cell-letter {
-  font-size: 1rem;
-  font-weight: bold;
+  font-size: calc(var(--cell-size, 50px) * 0.45);
+  font-weight: 700;
   text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.letter-revealed {
+  color: white;
+  font-size: calc(var(--cell-size, 50px) * 0.5);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  animation: letterAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cell-number {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 0.6rem;
-  font-weight: bold;
-  color: #666;
-  line-height: 1;
-  width: 12px;
-  height: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.word-clues {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.clues-title {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 1.1rem;
-  text-align: center;
-}
-
-.clues-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.clue-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  background: #f9f9f9;
-}
-
-.clue-found {
-  background: linear-gradient(45deg, #e8f5e8, #c8e6c9);
-  border-left: 4px solid #4caf50;
-}
-
-.clue-partial {
-  background: linear-gradient(45deg, #fff3e0, #ffe0b3);
-  border-left: 4px solid #ff9800;
-}
-
-.clue-number {
-  width: 24px;
-  height: 24px;
+  top: 3px;
+  left: 3px;
+  font-size: calc(var(--cell-size, 50px) * 0.2);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
   border-radius: 50%;
-  background: #42a5f5;
-  color: white;
+  width: calc(var(--cell-size, 50px) * 0.28);
+  height: calc(var(--cell-size, 50px) * 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
-  font-weight: bold;
-  flex-shrink: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 3;
 }
 
-.clue-found .clue-number {
-  background: #4caf50;
-}
-
-.clue-content {
-  flex: 1;
-}
-
-.clue-word {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.clue-length {
-  font-size: 0.7rem;
-  color: #666;
-  margin-top: 2px;
-}
-
-.clue-status {
-  flex-shrink: 0;
-  width: 24px;
-  height: 12px;
-  position: relative;
-}
-
-.progress-indicator {
-  height: 4px;
-  background: #42a5f5;
-  border-radius: 2px;
-  transition: width 0.3s ease;
+.intersection-glow {
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle, rgba(255, 193, 7, 0.3), transparent 70%);
+  border-radius: 50%;
+  animation: intersectionPulse 2s infinite ease-in-out;
+  z-index: 1;
 }
 
 @keyframes cellReveal {
   0% {
-    transform: scale(0.8);
-    background: #fff9c4;
+    transform: scale(0.3) rotate(-10deg);
+    opacity: 0;
+    background: linear-gradient(135deg, rgba(255, 235, 59, 0.9), rgba(255, 193, 7, 0.8));
   }
   50% {
-    transform: scale(1.1);
-    background: #fff176;
+    transform: scale(1.15) rotate(5deg);
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 152, 0, 0.8));
+  }
+  100% {
+    transform: scale(1.02) rotate(0deg);
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(56, 142, 60, 0.8));
+  }
+}
+
+@keyframes letterAppear {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
   }
   100% {
     transform: scale(1);
-    background: linear-gradient(45deg, #e8f5e8, #c8e6c9);
+    opacity: 1;
+  }
+}
+
+@keyframes wordComplete {
+  0% {
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 40px rgba(76, 175, 80, 0.6);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes intersectionPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
   }
 }
 
 @media (max-width: 480px) {
-  .crossword-grid {
-    max-width: 300px;
+  .grid-container {
+    padding: 15px;
+    gap: 2px;
   }
-
-  .grid-cell {
-    width: 30px;
-    height: 30px;
+  
+  .crossword-cell {
+    border-radius: 8px;
   }
-
+  
   .cell-letter {
-    font-size: 0.9rem;
+    font-size: calc(var(--cell-size, 50px) * 0.4);
   }
-
+  
+  .letter-revealed {
+    font-size: calc(var(--cell-size, 50px) * 0.45);
+  }
+  
   .cell-number {
-    font-size: 0.5rem;
-    width: 10px;
-    height: 10px;
+    font-size: calc(var(--cell-size, 50px) * 0.18);
+    width: calc(var(--cell-size, 50px) * 0.25);
+    height: calc(var(--cell-size, 50px) * 0.25);
   }
 }
 </style>

@@ -50,6 +50,19 @@
         class="submit-button"
       />
     </div>
+
+    <div class="center-circle shuffle-center" v-else>
+      <q-btn
+        round
+        color="purple"
+        icon="shuffle"
+        size="md"
+        @click="emit('shuffle-letters')"
+        class="shuffle-button"
+      >
+        <q-tooltip>Shuffle letters</q-tooltip>
+      </q-btn>
+    </div>
   </div>
 </template>
 
@@ -67,6 +80,7 @@ interface Emits {
   (e: 'letter-selected', indices: number[], word: string): void;
   (e: 'word-submitted', word: string): void;
   (e: 'letters-cleared'): void;
+  (e: 'shuffle-letters'): void;
 }
 
 const props = defineProps<Props>();
@@ -398,6 +412,26 @@ onUnmounted(() => {
   min-height: 35px;
 }
 
+.shuffle-center {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.shuffle-button {
+  width: 45px;
+  height: 45px;
+  min-height: 45px;
+  background: rgba(156, 39, 176, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(156, 39, 176, 0.4);
+  transition: all 0.3s ease;
+}
+
+.shuffle-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(156, 39, 176, 0.6);
+}
+
 @keyframes drawPath {
   from {
     stroke-dasharray: 1000;
@@ -461,6 +495,12 @@ onUnmounted(() => {
 
   .center-word {
     font-size: min(3.5vw, 1rem);
+  }
+
+  .shuffle-button {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
   }
 }
 </style>

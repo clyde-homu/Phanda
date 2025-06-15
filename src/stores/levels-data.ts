@@ -5,19 +5,7 @@ export const GAME_LEVELS: GameLevel[] = [
     id: 1,
     name: "Egypt - Great Pyramid",
     letters: ['C', 'A', 'T', 'R'],
-    crosswordGrid: [
-      [
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 2 }
-      ],
-      [
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 2 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 3 }
-      ]
-    ],
+    crosswordGrid: [],
     targetWords: ['CAT', 'CART'],
     isUnlocked: true,
     isCompleted: false,
@@ -28,26 +16,7 @@ export const GAME_LEVELS: GameLevel[] = [
     id: 2,
     name: "Paris - Eiffel Tower",
     letters: ['L', 'O', 'V', 'E', 'R'],
-    crosswordGrid: [
-      [
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 2 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 3 }
-      ],
-      [
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 2 }
-      ],
-      [
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 2 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 3 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 4 }
-      ]
-    ],
+    crosswordGrid: [],
     targetWords: ['LOVE', 'ORE', 'LOVER'],
     isUnlocked: false,
     isCompleted: false,
@@ -58,26 +27,7 @@ export const GAME_LEVELS: GameLevel[] = [
     id: 3,
     name: "Rome - Colosseum",
     letters: ['S', 'U', 'N', 'M', 'O', 'R'],
-    crosswordGrid: [
-      [
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 0, cellIndex: 2 }
-      ],
-      [
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 2 },
-        { letter: null, isRevealed: false, wordIndex: 1, cellIndex: 3 }
-      ],
-      [
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 0 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 1 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 2 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 3 },
-        { letter: null, isRevealed: false, wordIndex: 2, cellIndex: 4 }
-      ]
-    ],
+    crosswordGrid: [],
     targetWords: ['SUN', 'WORN', 'MOURN'],
     isUnlocked: false,
     isCompleted: false,
