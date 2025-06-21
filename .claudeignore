@@ -1,0 +1,4 @@
+# Ignore Capacitor build directory
+src-capacitor/
+src/pages/GamePage.vue
+src/pages/LevelSelectionPage.vue

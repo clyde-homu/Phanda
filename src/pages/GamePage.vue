@@ -15,6 +15,16 @@
           <q-icon name="diamond" color="blue" />
           <span>{{ userProgress.gems }}</span>
         </div>
+        <q-btn
+          flat
+          round
+          icon="palette"
+          color="white"
+          @click="showThemeSelector = true"
+          class="theme-button"
+        >
+          <q-tooltip>Change Theme</q-tooltip>
+        </q-btn>
       </div>
     </div>
 
@@ -120,6 +130,9 @@
       :found-words="foundWords"
       @hint-used="handleHintUsed"
     />
+
+    <!-- Theme Selector -->
+    <ThemeSelector v-model="showThemeSelector" @theme-changed="handleThemeChanged" />
   </q-page>
 </template>
 
@@ -127,14 +140,17 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game-store';
+import { useThemeStore } from '../stores/theme-store';
 import { shuffleArray } from '../utils/word-validator';
 import LetterCircle from '../components/LetterCircle.vue';
 import CrosswordGrid from '../components/CrosswordGrid.vue';
 import HintSystem from '../components/HintSystem.vue';
+import ThemeSelector from '../components/ThemeSelector.vue';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 const router = useRouter();
 const gameStore = useGameStore();
+const themeStore = useThemeStore();
 
 const { currentLevel, userProgress, foundWords, connectedLetterIndices } = gameStore;
 
@@ -143,8 +159,8 @@ const currentWord = ref('');
 const showSuccessDialog = ref(false);
 const showWordFoundDialog = ref(false);
 const showHintDialog = ref(false);
+const showThemeSelector = ref(false);
 const lastFoundWord = ref('');
-
 
 const goBack = async () => {
   gameStore.resetGame();
@@ -228,6 +244,12 @@ const handleLevelComplete = async () => {
   await router.push('/levels');
 };
 
+const handleThemeChanged = (themeId: string) => {
+  console.log('Theme changed to:', themeId);
+  // Check for theme unlocks based on current progress
+  themeStore.checkThemeUnlocks(userProgress.completedLevels.length);
+};
+
 onMounted(async () => {
   if (!currentLevel) {
     await router.push('/levels');
@@ -249,12 +271,13 @@ watch(
 
 <style scoped>
 .game-page {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--primary-bg);
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .game-header {
@@ -262,8 +285,10 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  z-index: 10;
 }
 
 .back-button {
@@ -289,6 +314,9 @@ watch(
 
 .game-stats {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .stat-item {
@@ -297,6 +325,11 @@ watch(
   gap: 5px;
   color: white;
   font-weight: 500;
+}
+
+.theme-button {
+  width: 40px;
+  height: 40px;
 }
 
 .game-content {
@@ -317,7 +350,6 @@ watch(
   align-items: center;
   justify-content: center;
 }
-
 
 .letter-circle-section {
   flex: 1;
@@ -420,7 +452,6 @@ watch(
     width: 45px;
     height: 45px;
   }
-
 
   .crossword-grid {
     max-height: 30vh;

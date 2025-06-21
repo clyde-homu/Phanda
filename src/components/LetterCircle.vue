@@ -1,7 +1,12 @@
 <template>
   <div class="letter-circle-container">
     <div class="letter-circle" ref="circleRef">
-      <svg class="connection-lines" :width="circleSize" :height="circleSize" :viewBox="`0 0 ${circleSize} ${circleSize}`">
+      <svg
+        class="connection-lines"
+        :width="circleSize"
+        :height="circleSize"
+        :viewBox="`0 0 ${circleSize} ${circleSize}`"
+      >
         <path
           v-if="connectionPath"
           :d="connectionPath"
@@ -24,7 +29,8 @@
           'letter-connecting': isConnecting && hoveredIndex === index,
           'letter-animated': animatedIndices.includes(index),
           'letter-drawing': isDrawingLine,
-          'letter-nearby': isDrawingLine && nearbyIndex === index && !selectedIndices.includes(index),
+          'letter-nearby':
+            isDrawingLine && nearbyIndex === index && !selectedIndices.includes(index),
         }"
         :style="getLetterPosition(index)"
         @mousedown="startConnection(index)"
@@ -186,11 +192,11 @@ const handleMouseEnter = (index: number) => {
 
 const updateMousePosition = (clientX: number, clientY: number) => {
   if (!circleRef.value) return;
-  
+
   const rect = circleRef.value.getBoundingClientRect();
   const svgX = ((clientX - rect.left) / rect.width) * circleSize.value;
   const svgY = ((clientY - rect.top) / rect.height) * circleSize.value;
-  
+
   currentMousePosition.value = { x: svgX, y: svgY };
 };
 
@@ -216,7 +222,7 @@ const handleMouseMove = (event: MouseEvent) => {
     // Precise tolerance for mouse - must be close to letter center
     const letterRadius = (rect.width / 2) * 0.7; // 70% of letter radius for mouse precision
     const nearbyRadius = (rect.width / 2) * 0.9; // 90% for nearby detection
-    
+
     if (distance <= letterRadius && distance < minDistance) {
       targetIndex = index;
       minDistance = distance;
@@ -263,7 +269,7 @@ const handleTouchMove = (event: TouchEvent) => {
     // More precise tolerance - user must touch closer to the letter center
     const letterRadius = (rect.width / 2) * 0.8; // 80% of letter radius for precision
     const nearbyRadius = rect.width / 2; // Full radius for nearby detection
-    
+
     if (distance <= letterRadius && distance < minDistance) {
       targetIndex = index;
       minDistance = distance;
@@ -373,7 +379,7 @@ const updateCircleSize = () => {
 onMounted(() => {
   updateCircleSize();
   window.addEventListener('resize', updateCircleSize);
-  
+
   document.addEventListener('mouseup', handleMouseUp);
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('click', handleClickOutside);
@@ -404,9 +410,10 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--glass-border);
+  box-shadow: var(--shadow-primary);
 }
 
 .connection-lines {
@@ -442,21 +449,22 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(45deg, #42a5f5, #478ed1);
-  color: white;
+  background: linear-gradient(45deg, var(--accent-color), var(--accent-color));
+  color: var(--text-primary);
   font-size: clamp(1.2rem, 3.5vw, 2rem);
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-primary);
   transition: all 0.3s ease;
 }
 
 .letter-selected .letter-content {
-  background: linear-gradient(45deg, #4caf50, #45a049);
+  background: linear-gradient(45deg, var(--success-color), var(--success-color));
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  box-shadow: var(--shadow-glow);
+  animation: glow 2s ease-in-out infinite alternate;
 }
 
 .letter-connecting .letter-content {

@@ -21,6 +21,16 @@
             <q-icon name="stars" color="amber" />
             <span>{{ userProgress.totalStars }}</span>
           </div>
+          <q-btn
+            flat
+            round
+            icon="palette"
+            color="white"
+            @click="showThemeSelector = true"
+            class="theme-button interactive-button"
+          >
+            <q-tooltip>Change Theme</q-tooltip>
+          </q-btn>
         </div>
       </div>
     </div>
@@ -34,7 +44,7 @@
           :class="{
             'level-locked': !level.isUnlocked,
             'level-completed': level.isCompleted,
-            'level-current': level.id === userProgress.currentLevel
+            'level-current': level.id === userProgress.currentLevel,
           }"
           @click="selectLevel(level)"
         >
@@ -43,7 +53,7 @@
             :class="{
               'card-locked': !level.isUnlocked,
               'card-completed': level.isCompleted,
-              'card-current': level.id === userProgress.currentLevel
+              'card-current': level.id === userProgress.currentLevel,
             }"
           >
             <div class="card-background">
@@ -54,20 +64,20 @@
                   :color="level.isUnlocked ? 'primary' : 'grey'"
                 />
               </div>
-              
+
               <div class="level-overlay" v-if="!level.isUnlocked">
                 <q-icon name="lock" size="30px" color="grey" />
               </div>
-              
+
               <div class="completion-badge" v-if="level.isCompleted">
                 <q-icon name="check_circle" size="24px" color="green" />
               </div>
             </div>
-            
+
             <q-card-section class="level-info">
               <div class="level-number">{{ level.id }}</div>
               <div class="level-name">{{ level.name }}</div>
-              
+
               <div class="level-stars" v-if="level.isCompleted">
                 <q-icon
                   v-for="star in 3"
@@ -77,7 +87,7 @@
                   size="16px"
                 />
               </div>
-              
+
               <div class="level-progress" v-else-if="level.isUnlocked">
                 <span class="progress-text">Tap to Play</span>
               </div>
@@ -93,7 +103,7 @@
           <div class="preview-title">{{ selectedLevel?.name }}</div>
           <q-btn flat round icon="close" @click="showLevelDialog = false" />
         </q-card-section>
-        
+
         <q-card-section class="preview-content">
           <div class="preview-stats">
             <div class="preview-stat">
@@ -105,18 +115,14 @@
               <span>{{ selectedLevel?.targetWords.length }} Words</span>
             </div>
           </div>
-          
+
           <div class="letter-preview">
-            <div
-              v-for="letter in selectedLevel?.letters"
-              :key="letter"
-              class="preview-letter"
-            >
+            <div v-for="letter in selectedLevel?.letters" :key="letter" class="preview-letter">
               {{ letter }}
             </div>
           </div>
         </q-card-section>
-        
+
         <q-card-actions align="center">
           <q-btn
             push
@@ -131,71 +137,89 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Theme Selector -->
+    <ThemeSelector v-model="showThemeSelector" @theme-changed="handleThemeChanged" />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useGameStore } from '../stores/game-store'
-import { getUnlockedLevels } from '../stores/levels-data'
-import type { GameLevel } from '../stores/game-store'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useGameStore } from '../stores/game-store';
+import { useThemeStore } from '../stores/theme-store';
+import { getUnlockedLevels } from '../stores/levels-data';
+import ThemeSelector from '../components/ThemeSelector.vue';
+import type { GameLevel } from '../stores/game-store';
 
-const router = useRouter()
-const gameStore = useGameStore()
-const showLevelDialog = ref(false)
-const selectedLevel = ref<GameLevel | null>(null)
+const router = useRouter();
+const gameStore = useGameStore();
+const themeStore = useThemeStore();
+const showLevelDialog = ref(false);
+const showThemeSelector = ref(false);
+const selectedLevel = ref<GameLevel | null>(null);
 
-const { userProgress } = gameStore
+const { userProgress } = gameStore;
 
 const availableLevels = computed(() => {
-  return getUnlockedLevels(userProgress.completedLevels)
-})
+  return getUnlockedLevels(userProgress.completedLevels);
+});
 
 const getLandmarkIcon = (landmark: string): string => {
   const iconMap: Record<string, string> = {
     'pyramid.jpg': 'terrain',
     'eiffel.jpg': 'tower',
-    'colosseum.jpg': 'stadium'
-  }
-  return iconMap[landmark] || 'place'
-}
+    'colosseum.jpg': 'stadium',
+  };
+  return iconMap[landmark] || 'place';
+};
 
 const selectLevel = (level: GameLevel) => {
-  if (!level.isUnlocked) return
-  
-  selectedLevel.value = level
-  showLevelDialog.value = true
-}
+  if (!level.isUnlocked) return;
+
+  selectedLevel.value = level;
+  showLevelDialog.value = true;
+};
 
 const startLevel = async () => {
   if (selectedLevel.value) {
-    gameStore.setCurrentLevel(selectedLevel.value)
-    await router.push('/game')
+    gameStore.setCurrentLevel(selectedLevel.value);
+    await router.push('/game');
   }
-}
+};
 
 const goBack = async () => {
-  await router.push('/')
-}
+  await router.push('/');
+};
+
+const handleThemeChanged = (themeId: string) => {
+  console.log('Theme changed to:', themeId);
+  // Check for theme unlocks based on current progress
+  themeStore.checkThemeUnlocks(userProgress.completedLevels.length);
+};
 
 onMounted(() => {
-  gameStore.loadProgress()
-})
+  gameStore.loadProgress();
+  // Check theme unlocks on page load
+  themeStore.checkThemeUnlocks(userProgress.completedLevels.length);
+});
 </script>
 
 <style scoped>
 .level-selection-page {
-  background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+  background: var(--primary-bg);
   min-height: 100vh;
+  position: relative;
 }
 
 .page-header {
   display: flex;
   align-items: center;
   padding: 20px;
-  background: rgba(0,0,0,0.1);
-  backdrop-filter: blur(10px);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  z-index: 10;
 }
 
 .back-button {
@@ -219,6 +243,7 @@ onMounted(() => {
 .player-stats {
   display: flex;
   gap: 20px;
+  align-items: center;
 }
 
 .stat {
@@ -227,6 +252,11 @@ onMounted(() => {
   gap: 5px;
   color: white;
   font-weight: 500;
+}
+
+.theme-button {
+  width: 40px;
+  height: 40px;
 }
 
 .levels-container {
@@ -256,7 +286,7 @@ onMounted(() => {
   border-radius: 15px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   background: white;
 }
 
@@ -293,7 +323,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,15 +441,15 @@ onMounted(() => {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
   }
-  
+
   .level-card {
     height: 160px;
   }
-  
+
   .page-header {
     padding: 15px;
   }
-  
+
   .page-title {
     font-size: 1.3rem;
   }
