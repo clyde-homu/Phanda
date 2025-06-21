@@ -4,24 +4,15 @@
 
     <!-- Header -->
     <div class="page-header glass">
-      <q-btn
-        flat
-        round
-        icon="arrow_back"
-        color="white"
-        size="md"
-        @click="goBack"
-        class="back-button interactive-button"
-      />
       <div class="header-content">
         <div class="player-stats">
           <div class="stat">
             <q-icon name="diamond" color="blue" />
-            <span>{{ userProgress.gems }}</span>
+            <span>{{ gameStore.userProgress.gems }}</span>
           </div>
           <div class="stat">
             <q-icon name="stars" color="amber" />
-            <span>{{ totalStars }}</span>
+            <span>{{ gameStore.totalStars }}</span>
           </div>
           <q-btn
             flat
@@ -77,12 +68,12 @@
       </div>
     </div>
 
-    <!-- Levels Grid -->
+    <!-- Levels Grid Section -->
     <div class="levels-section">
       <div class="section-header">
         <h3 class="section-title">
           <q-icon name="map" class="section-icon" />
-          {{ getLanguageName(selectedLanguage) }} Levels
+          {{ getLanguageName(selectedLanguage) }} Adventures
         </h3>
         <div class="level-progress-bar">
           <div
@@ -94,8 +85,9 @@
         </div>
       </div>
 
-      <div class="levels-container">
-        <div class="levels-grid">
+      <!-- Scrollable Levels Container -->
+      <div class="levels-scroll-container">
+        <div class="levels-grid" :key="selectedLanguage">
           <div
             v-for="level in availableLevels"
             :key="`${selectedLanguage}-${level.id}`"
@@ -115,88 +107,175 @@
                 'card-current': level.id === currentLanguageProgress.currentLevel,
               }"
             >
-              <div class="card-background">
-                <div class="landmark-image">
+              <!-- Card Background with Gradient -->
+              <div class="card-background" :style="getCardGradient(level)">
+                <!-- Floating Particles -->
+                <div class="card-particles">
+                  <div
+                    v-for="n in 3"
+                    :key="n"
+                    class="floating-particle"
+                    :style="getParticleStyle(n)"
+                  ></div>
+                </div>
+
+                <!-- Landmark Icon -->
+                <div class="landmark-container">
+                  <div class="landmark-glow"></div>
                   <q-icon
                     :name="getLandmarkIcon(level.landmark)"
-                    size="32px"
-                    :color="level.isUnlocked ? 'primary' : 'grey'"
+                    size="40px"
+                    :color="level.isUnlocked ? 'white' : 'grey-5'"
+                    class="landmark-icon"
                   />
                 </div>
 
+                <!-- Level Number -->
+                <div class="level-number-badge">
+                  <span class="level-number">{{ level.id }}</span>
+                </div>
+
+                <!-- Status Overlays -->
                 <div class="level-overlay" v-if="!level.isUnlocked">
-                  <q-icon name="lock" size="24px" color="grey" />
+                  <div class="lock-container">
+                    <q-icon name="lock" size="28px" color="white" class="lock-icon" />
+                  </div>
                 </div>
 
                 <div class="completion-badge" v-if="level.isCompleted">
-                  <q-icon name="check_circle" size="20px" color="green" />
+                  <q-icon name="check_circle" size="24px" color="white" class="completion-icon" />
                 </div>
 
-                <div class="level-number-badge">{{ level.id }}</div>
+                <!-- Progress Ring for Current Level -->
+                <div
+                  v-if="level.id === currentLanguageProgress.currentLevel && !level.isCompleted"
+                  class="progress-ring"
+                >
+                  <svg class="progress-ring-svg" width="60" height="60">
+                    <circle
+                      class="progress-ring-circle-bg"
+                      stroke="rgba(255,255,255,0.3)"
+                      stroke-width="3"
+                      fill="transparent"
+                      r="27"
+                      cx="30"
+                      cy="30"
+                    />
+                    <circle
+                      class="progress-ring-circle"
+                      stroke="white"
+                      stroke-width="3"
+                      fill="transparent"
+                      r="27"
+                      cx="30"
+                      cy="30"
+                      :stroke-dasharray="169.65"
+                      :stroke-dashoffset="169.65 * (1 - 0.3)"
+                    />
+                  </svg>
+                </div>
               </div>
 
+              <!-- Card Content -->
               <q-card-section class="level-info">
-                <div class="level-name">{{ level.name }}</div>
-
-                <div class="level-details">
-                  <div class="level-letters">
-                    <span
-                      v-for="letter in level.letters.slice(0, 4)"
-                      :key="letter"
-                      class="letter-chip"
-                    >
-                      {{ letter }}
-                    </span>
-                    <span v-if="level.letters.length > 4" class="more-letters"
-                      >+{{ level.letters.length - 4 }}</span
-                    >
+                <div class="level-header">
+                  <div class="level-name">{{ level.name }}</div>
+                  <div class="level-difficulty">
+                    <q-icon
+                      v-for="n in getDifficultyLevel(level)"
+                      :key="n"
+                      name="star"
+                      size="12px"
+                      color="amber"
+                    />
                   </div>
+                </div>
 
-                  <div class="level-words-count">
-                    <q-icon name="quiz" size="14px" />
+                <div class="level-stats">
+                  <div class="stat-item">
+                    <q-icon name="quiz" size="16px" color="primary" />
                     <span>{{ level.targetWords.length }} words</span>
                   </div>
+                  <div class="stat-item">
+                    <q-icon name="timer" size="16px" color="orange" />
+                    <span>{{ getEstimatedTime(level) }}</span>
+                  </div>
                 </div>
 
+                <!-- Stars Display for Completed Levels -->
                 <div class="level-stars" v-if="level.isCompleted">
-                  <q-icon
-                    v-for="star in 3"
-                    :key="star"
-                    name="star"
-                    :color="star <= level.stars ? 'amber' : 'grey-4'"
-                    size="14px"
-                  />
+                  <div class="stars-container">
+                    <q-icon
+                      v-for="star in 3"
+                      :key="star"
+                      name="star"
+                      :color="star <= level.stars ? 'amber' : 'grey-4'"
+                      size="16px"
+                      class="star-icon"
+                    />
+                  </div>
+                  <span class="stars-text">Perfect!</span>
                 </div>
 
+                <!-- Action Button for Unlocked Levels -->
                 <div class="level-action" v-else-if="level.isUnlocked">
                   <q-btn
-                    dense
-                    color="primary"
-                    label="PLAY"
+                    unelevated
+                    :color="
+                      level.id === currentLanguageProgress.currentLevel ? 'accent' : 'primary'
+                    "
+                    :label="
+                      level.id === currentLanguageProgress.currentLevel ? 'CONTINUE' : 'START'
+                    "
                     size="sm"
-                    class="play-btn"
+                    class="action-btn"
                     @click.stop="startLevel(level)"
-                  />
+                  >
+                    <q-icon
+                      :name="
+                        level.id === currentLanguageProgress.currentLevel
+                          ? 'play_circle'
+                          : 'play_arrow'
+                      "
+                      left
+                      size="18px"
+                    />
+                  </q-btn>
+                </div>
+
+                <!-- Locked State -->
+                <div class="level-locked-info" v-else>
+                  <span class="locked-text">Complete previous levels</span>
                 </div>
               </q-card-section>
             </q-card>
           </div>
 
-          <!-- Add Level Coming Soon Cards -->
+          <!-- Coming Soon Cards -->
           <div
             v-for="n in Math.max(0, 6 - availableLevels.length)"
             :key="`coming-soon-${n}`"
             class="level-item level-coming-soon"
           >
             <q-card class="level-card card-coming-soon">
-              <div class="card-background">
-                <div class="coming-soon-icon">
-                  <q-icon name="hourglass_empty" size="32px" color="grey" />
+              <div class="card-background coming-soon-bg">
+                <div class="coming-soon-particles">
+                  <div v-for="p in 2" :key="p" class="coming-soon-particle"></div>
+                </div>
+                <div class="coming-soon-icon-container">
+                  <q-icon
+                    name="hourglass_empty"
+                    size="36px"
+                    color="grey-6"
+                    class="coming-soon-icon"
+                  />
                 </div>
               </div>
               <q-card-section class="level-info">
-                <div class="coming-soon-text">Coming Soon</div>
-                <div class="coming-soon-subtitle">More adventures await!</div>
+                <div class="coming-soon-content">
+                  <div class="coming-soon-title">Coming Soon</div>
+                  <div class="coming-soon-subtitle">New adventures await!</div>
+                </div>
               </q-card-section>
             </q-card>
           </div>
@@ -215,12 +294,12 @@
         <q-card-section class="preview-content">
           <div class="preview-stats">
             <div class="preview-stat">
-              <q-icon name="casino" color="primary" />
-              <span>{{ selectedLevel?.letters.length }} Letters</span>
+              <q-icon name="quiz" color="primary" />
+              <span>{{ selectedLevel?.targetWords.length }} Words</span>
             </div>
             <div class="preview-stat">
-              <q-icon name="quiz" color="orange" />
-              <span>{{ selectedLevel?.targetWords.length }} Words</span>
+              <q-icon name="timer" color="orange" />
+              <span>{{ getEstimatedTime(selectedLevel) }}</span>
             </div>
             <div class="preview-stat">
               <q-icon name="language" color="blue" />
@@ -235,7 +314,7 @@
             color="primary"
             size="lg"
             icon="play_arrow"
-            label="START LEVEL"
+            label="START ADVENTURE"
             @click="startLevel(selectedLevel!)"
             :disable="!selectedLevel?.isUnlocked"
             class="start-button interactive-button"
@@ -273,15 +352,29 @@ const showLevelDialog = ref(false);
 const showThemeSelector = ref(false);
 const selectedLevel = ref<GameLevel | null>(null);
 
-const { userProgress, currentLanguageProgress, totalStars } = gameStore;
-const selectedLanguage = computed(() => userProgress.selectedLanguage);
+const selectedLanguage = computed(() => {
+  return gameStore.userProgress.selectedLanguage;
+});
+
+const currentLanguageProgress = computed(() => {
+  const progress = gameStore.userProgress.languages[selectedLanguage.value] || {
+    currentLevel: 1,
+    completedLevels: [],
+    totalStars: 0,
+  };
+  return progress;
+});
 
 const allLanguages = computed(() => {
   return getUnlockedLanguages();
 });
 
 const availableLevels = computed(() => {
-  return getUnlockedLevels(selectedLanguage.value, currentLanguageProgress.completedLevels);
+  const levels = getUnlockedLevels(
+    selectedLanguage.value,
+    currentLanguageProgress.value.completedLevels,
+  );
+  return levels;
 });
 
 const triggerHapticFeedback = async (style: ImpactStyle = ImpactStyle.Light) => {
@@ -309,18 +402,71 @@ const getLandmarkIcon = (landmark: string): string => {
   return iconMap[landmark] || 'place';
 };
 
+const getCardGradient = (level: GameLevel): string => {
+  if (!level.isUnlocked) {
+    return 'background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%)';
+  }
+  if (level.isCompleted) {
+    return 'background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)';
+  }
+  if (level.id === currentLanguageProgress.value.currentLevel) {
+    return 'background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%)';
+  }
+
+  const gradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+  ];
+
+  return `background: ${gradients[level.id % gradients.length]}`;
+};
+
+const getParticleStyle = (index: number): string => {
+  const positions = [
+    { top: '20%', left: '15%', delay: '0s' },
+    { top: '60%', left: '80%', delay: '1s' },
+    { top: '40%', left: '50%', delay: '2s' },
+  ];
+
+  const pos = positions[index - 1];
+  if (!pos) {
+    return 'top: 50%; left: 50%; animation-delay: 0s;';
+  }
+  return `top: ${pos.top}; left: ${pos.left}; animation-delay: ${pos.delay};`;
+};
+
+const getDifficultyLevel = (level: GameLevel): number => {
+  const wordCount = level.targetWords.length;
+  if (wordCount <= 3) return 1;
+  if (wordCount <= 6) return 2;
+  return 3;
+};
+
+const getEstimatedTime = (level: GameLevel | null): string => {
+  if (!level) return '0 min';
+  const wordCount = level.targetWords.length;
+  const minutes = Math.max(2, Math.ceil(wordCount * 0.8));
+  return `${minutes} min`;
+};
+
 const getLanguageName = (languageId: string): string => {
   return AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId)?.name || languageId;
 };
 
 const getLanguageStars = (languageId: string): number => {
-  return userProgress.languages[languageId]?.totalStars || 0;
+  return gameStore.userProgress.languages[languageId]?.totalStars || 0;
 };
 
 const selectLanguage = async (language: Language) => {
   if (selectedLanguage.value !== language.id) {
     await triggerHapticFeedback(ImpactStyle.Medium);
     gameStore.setSelectedLanguage(language.id);
+    showLevelDialog.value = false;
+    selectedLevel.value = null;
   }
 };
 
@@ -344,40 +490,40 @@ const startLevel = async (level: GameLevel) => {
   }
 };
 
-const goBack = async () => {
-  await triggerHapticFeedback(ImpactStyle.Light);
-  await router.push('/');
+const handleThemeChanged = () => {
+  themeStore.checkThemeUnlocks(currentLanguageProgress.value.completedLevels.length);
 };
 
-const handleThemeChanged = (themeId: string) => {
-  console.log('Theme changed to:', themeId);
-  themeStore.checkThemeUnlocks(currentLanguageProgress.completedLevels.length);
-};
-
-// Watch for language changes to trigger animations
-watch(selectedLanguage, () => {
-  // Add animation class to levels grid
-  const levelsGrid = document.querySelector('.levels-grid');
-  if (levelsGrid) {
-    levelsGrid.classList.add('language-switch-animation');
-    setTimeout(() => {
-      levelsGrid.classList.remove('language-switch-animation');
-    }, 600);
-  }
-});
+watch(
+  selectedLanguage,
+  (newLanguage, oldLanguage) => {
+    if (newLanguage !== oldLanguage) {
+      const levelsGrid = document.querySelector('.levels-grid');
+      if (levelsGrid) {
+        levelsGrid.classList.add('language-switch-animation');
+        setTimeout(() => {
+          levelsGrid.classList.remove('language-switch-animation');
+        }, 600);
+      }
+    }
+  },
+  { immediate: false },
+);
 
 onMounted(() => {
   gameStore.loadProgress();
-  themeStore.checkThemeUnlocks(currentLanguageProgress.completedLevels.length);
+  themeStore.checkThemeUnlocks(currentLanguageProgress.value.completedLevels.length);
 });
 </script>
 
 <style scoped>
 .level-selection-page {
   background: var(--primary-bg);
-  min-height: 100vh;
+  height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
@@ -386,10 +532,9 @@ onMounted(() => {
   padding: 12px 20px;
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--glass-border);
-  position: sticky;
-  top: 0;
   z-index: 100;
   min-height: 60px;
+  flex-shrink: 0;
 }
 
 .back-button {
@@ -427,6 +572,7 @@ onMounted(() => {
 .language-section {
   padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .section-header {
@@ -544,6 +690,9 @@ onMounted(() => {
 .levels-section {
   padding: 20px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .level-progress-bar {
@@ -561,16 +710,40 @@ onMounted(() => {
   transition: width 0.8s ease;
 }
 
-.levels-container {
+/* Scrollable Levels Container */
+.levels-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   margin-top: 15px;
+  padding-right: 5px;
+}
+
+.levels-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.levels-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.levels-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.levels-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 15px;
-  max-width: 1000px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding-bottom: 20px;
 }
 
 .language-switch-animation {
@@ -590,152 +763,263 @@ onMounted(() => {
 
 .level-item {
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
 }
 
 .level-item:hover:not(.level-locked):not(.level-coming-soon) {
-  transform: translateY(-3px);
+  transform: translateY(-5px) scale(1.02);
 }
 
 .level-card {
-  height: 200px;
-  border-radius: 16px;
+  height: 220px;
+  border-radius: 20px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   background: white;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
 }
 
 .card-locked {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
 .card-completed {
-  border: 2px solid #4caf50;
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4);
 }
 
 .card-current {
-  border: 2px solid #2196f3;
-  box-shadow: 0 0 20px rgba(33, 150, 243, 0.4);
+  box-shadow: 0 0 30px rgba(33, 150, 243, 0.5);
+  transform: scale(1.05);
 }
 
 .card-coming-soon {
-  opacity: 0.5;
-  background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+  opacity: 0.6;
 }
 
 .card-background {
-  height: 110px;
-  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  height: 130px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.coming-soon-bg {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%) !important;
+}
+
+/* Floating Particles */
+.card-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.floating-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: floatParticle 4s ease-in-out infinite;
+}
+
+@keyframes floatParticle {
+  0%,
+  100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+.coming-soon-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.coming-soon-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(158, 158, 158, 0.4);
+  border-radius: 50%;
+  animation: floatParticle 6s ease-in-out infinite;
+}
+
+.coming-soon-particle:nth-child(1) {
+  top: 30%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.coming-soon-particle:nth-child(2) {
+  top: 70%;
+  left: 70%;
+  animation-delay: 2s;
+}
+
+/* Landmark Container */
+.landmark-container {
   position: relative;
+  z-index: 2;
 }
 
-.landmark-image {
+.landmark-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.landmark-icon {
+  position: relative;
   z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
+/* Level Number Badge */
+.level-number-badge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.level-number {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Overlays */
 .level-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  z-index: 4;
+}
+
+.lock-container {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.lock-icon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .completion-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: white;
+  top: 15px;
+  right: 15px;
+  background: rgba(76, 175, 80, 0.9);
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.level-number-badge {
+.completion-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Progress Ring */
+.progress-ring {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: var(--accent-color);
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 3;
 }
 
+.progress-ring-svg {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.5s ease;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+/* Card Content */
 .level-info {
-  padding: 12px;
+  padding: 15px;
   height: 90px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
+.level-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
 .level-name {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #333;
   font-weight: 600;
   line-height: 1.2;
-  margin-bottom: 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.level-details {
   flex: 1;
+  margin-right: 8px;
 }
 
-.level-letters {
+.level-difficulty {
   display: flex;
-  gap: 3px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
+  gap: 1px;
 }
 
-.letter-chip {
-  background: var(--accent-color);
-  color: white;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+.level-stats {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: bold;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.more-letters {
-  color: #666;
-  font-size: 0.7rem;
-  align-self: center;
-  margin-left: 2px;
-}
-
-.level-words-count {
+.stat-item {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -743,39 +1027,82 @@ onMounted(() => {
   font-size: 0.75rem;
 }
 
+/* Stars Display */
 .level-stars {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+}
+
+.stars-container {
+  display: flex;
   gap: 2px;
 }
 
+.star-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.stars-text {
+  color: #4caf50;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Action Button */
 .level-action {
   display: flex;
   justify-content: center;
 }
 
-.play-btn {
+.action-btn {
+  font-size: 0.75rem;
+  padding: 6px 16px;
+  border-radius: 15px;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+/* Locked Info */
+.level-locked-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.locked-text {
+  color: #999;
   font-size: 0.7rem;
-  padding: 4px 12px;
-  border-radius: 12px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Coming Soon Styles */
+.coming-soon-icon-container {
+  position: relative;
+  z-index: 2;
 }
 
 .coming-soon-icon {
-  opacity: 0.5;
+  opacity: 0.6;
+  animation: pulse 3s ease-in-out infinite;
 }
 
-.coming-soon-text {
+.coming-soon-content {
+  text-align: center;
+}
+
+.coming-soon-title {
   color: #999;
   font-weight: 600;
   font-size: 0.9rem;
-  text-align: center;
+  margin-bottom: 4px;
 }
 
 .coming-soon-subtitle {
   color: #bbb;
   font-size: 0.7rem;
-  text-align: center;
-  margin-top: 4px;
 }
 
 /* Dialog Styles */
@@ -827,14 +1154,37 @@ onMounted(() => {
   font-weight: bold;
 }
 
+/* Animations */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 480px) {
   .levels-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 15px;
   }
 
   .level-card {
-    height: 180px;
+    height: 200px;
+  }
+
+  .card-background {
+    height: 120px;
+  }
+
+  .level-info {
+    height: 80px;
+    padding: 12px;
   }
 
   .page-header {
@@ -842,7 +1192,10 @@ onMounted(() => {
     min-height: 50px;
   }
 
-  .language-section,
+  .language-section {
+    padding: 15px;
+  }
+
   .levels-section {
     padding: 15px;
   }

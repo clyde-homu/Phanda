@@ -59,13 +59,17 @@ export const useGameStore = defineStore('game', () => {
 
   // Computed properties
   const currentLanguageProgress = computed(() => {
-    return (
-      userProgress.value.languages[userProgress.value.selectedLanguage] || {
-        currentLevel: 1,
-        completedLevels: [],
-        totalStars: 0,
-      }
+    const progress = userProgress.value.languages[userProgress.value.selectedLanguage] || {
+      currentLevel: 1,
+      completedLevels: [],
+      totalStars: 0,
+    };
+    console.log(
+      'Current language progress computed:',
+      userProgress.value.selectedLanguage,
+      progress,
     );
+    return progress;
   });
 
   const totalStars = computed(() => {
@@ -111,6 +115,12 @@ export const useGameStore = defineStore('game', () => {
   };
 
   const setSelectedLanguage = (language: string) => {
+    console.log(
+      'Setting selected language from',
+      userProgress.value.selectedLanguage,
+      'to',
+      language,
+    );
     userProgress.value.selectedLanguage = language;
     if (!userProgress.value.languages[language]) {
       userProgress.value.languages[language] = {
@@ -118,7 +128,10 @@ export const useGameStore = defineStore('game', () => {
         completedLevels: [],
         totalStars: 0,
       };
+      console.log('Created new language progress for', language);
     }
+    console.log('Selected language is now:', userProgress.value.selectedLanguage);
+    console.log('Full user progress:', JSON.stringify(userProgress.value, null, 2));
     saveProgress();
   };
 
@@ -179,6 +192,7 @@ export const useGameStore = defineStore('game', () => {
   };
 
   const saveProgress = () => {
+    console.log('Saving progress:', JSON.stringify(userProgress.value, null, 2));
     localStorage.setItem('phanda-progress', JSON.stringify(userProgress.value));
   };
 
@@ -186,6 +200,7 @@ export const useGameStore = defineStore('game', () => {
     const saved = localStorage.getItem('phanda-progress');
     if (saved) {
       const loadedProgress = JSON.parse(saved);
+      console.log('Loading progress:', loadedProgress);
       // Ensure backward compatibility
       if (loadedProgress.currentLevel !== undefined) {
         // Old format - convert to new format
@@ -204,6 +219,7 @@ export const useGameStore = defineStore('game', () => {
       } else {
         userProgress.value = loadedProgress;
       }
+      console.log('Final loaded progress:', userProgress.value);
     }
   };
 
