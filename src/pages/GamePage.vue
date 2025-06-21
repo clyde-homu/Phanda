@@ -62,6 +62,23 @@
           <div class="gems-glow"></div>
         </div>
 
+        <!-- Hint Button in Header -->
+        <q-btn
+          flat
+          round
+          icon="lightbulb"
+          color="amber"
+          size="md"
+          @click="useHint"
+          :disable="!canUseHint || availableHints.length === 0"
+          class="hint-btn pulse-on-hover"
+          :class="{ 'hint-available': canUseHint && availableHints.length > 0 }"
+        >
+          <q-tooltip anchor="bottom middle" self="top middle" class="custom-tooltip">
+            {{ canUseHint ? `Reveal Word (5 💎)` : 'Need 5 gems' }}
+          </q-tooltip>
+        </q-btn>
+
         <q-btn
           flat
           round
@@ -224,13 +241,34 @@
       </q-card>
     </q-dialog>
 
-    <!-- Enhanced Hint System -->
-    <HintSystem
-      v-model="showHintDialog"
-      :target-words="currentLevel?.targetWords || []"
-      :found-words="foundWords"
-      @hint-used="handleHintUsed"
-    />
+    <!-- Hint Result Dialog -->
+    <q-dialog v-model="showHintResult" no-backdrop-dismiss class="hint-result-dialog">
+      <q-card class="hint-result-card glass-morphism">
+        <div class="hint-result-bg">
+          <div class="hint-particles">
+            <div
+              v-for="n in 8"
+              :key="n"
+              class="hint-particle"
+              :style="getHintParticleStyle(n)"
+            ></div>
+          </div>
+        </div>
+
+        <q-card-section class="hint-result-content">
+          <div class="hint-result-icon-container">
+            <q-icon name="lightbulb" size="50px" color="amber" class="hint-result-icon" />
+            <div class="hint-glow-effect"></div>
+          </div>
+          <div class="hint-result-title">Word Revealed!</div>
+          <div class="hint-result-word">{{ revealedWord }}</div>
+          <div class="hint-cost-display">
+            <q-icon name="diamond" color="cyan" size="20px" />
+            <span>-5 Gems</span>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
 
     <!-- Theme Selector -->
     <ThemeSelector v-model="showThemeSelector" @theme-changed="handleThemeChanged" />
@@ -238,14 +276,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game-store';
 import { useThemeStore } from '../stores/theme-store';
 import { shuffleArray } from '../utils/word-validator';
 import LetterCircle from '../components/LetterCircle.vue';
 import CrosswordGrid from '../components/CrosswordGrid.vue';
-import HintSystem from '../components/HintSystem.vue';
 import ThemeSelector from '../components/ThemeSelector.vue';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
@@ -260,9 +297,18 @@ const shuffledLetters = ref<string[]>([]);
 const currentWord = ref('');
 const showSuccessDialog = ref(false);
 const showWordFoundDialog = ref(false);
-const showHintDialog = ref(false);
 const showThemeSelector = ref(false);
+const showHintResult = ref(false);
 const lastFoundWord = ref('');
+const revealedWord = ref('');
+
+// Computed properties
+const availableHints = computed(() => {
+  if (!currentLevel) return [];
+  return currentLevel.targetWords.filter((word: string) => !foundWords.includes(word));
+});
+
+const canUseHint = computed(() => userProgress.gems >= 5);
 
 const goBack = async () => {
   gameStore.resetGame();
@@ -307,16 +353,44 @@ const handleLettersClear = () => {
   currentWord.value = '';
 };
 
-const handleHintUsed = (type: string, data?: unknown) => {
-  console.log('Hint used:', type, data);
-  switch (type) {
-    case 'reveal-letter':
-      break;
-    case 'word-hint':
-      break;
-    case 'smart-shuffle':
-      void shuffleLetters();
-      break;
+const useHint = async () => {
+  if (!canUseHint.value || availableHints.value.length === 0) {
+    return;
+  }
+
+  // Deduct gems
+  userProgress.gems -= 5;
+
+  // Get random unrevealed word
+  const randomWord = availableHints.value[Math.floor(Math.random() * availableHints.value.length)];
+
+  // Check if randomWord exists (TypeScript safety)
+  if (!randomWord) {
+    console.error('No available hints found');
+    return;
+  }
+
+  // Add word to found words
+  gameStore.addFoundWord(randomWord);
+  revealedWord.value = randomWord;
+
+  // Show hint result
+  showHintResult.value = true;
+
+  // Trigger haptic feedback
+  await triggerHapticFeedback(ImpactStyle.Medium);
+
+  // Hide hint result after 2 seconds
+  setTimeout(() => {
+    showHintResult.value = false;
+  }, 2000);
+
+  // Check if level is complete
+  if (currentLevel && foundWords.length === currentLevel.targetWords.length) {
+    setTimeout(() => {
+      void triggerHapticFeedback(ImpactStyle.Heavy);
+      showSuccessDialog.value = true;
+    }, 2500);
   }
 };
 
@@ -380,6 +454,17 @@ const getParticleStyle = (index: number) => {
   const angle = (index * 30) % 360;
   const distance = 40 + (index % 3) * 15;
   const delay = (index * 0.1) % 1;
+
+  return `
+    transform: rotate(${angle}deg) translateX(${distance}px);
+    animation-delay: ${delay}s;
+  `;
+};
+
+const getHintParticleStyle = (index: number) => {
+  const angle = (index * 45) % 360;
+  const distance = 30 + (index % 2) * 10;
+  const delay = (index * 0.15) % 1;
 
   return `
     transform: rotate(${angle}deg) translateX(${distance}px);
@@ -512,9 +597,67 @@ watch(
   transition: all 0.3s ease;
 }
 
+.hint-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 193, 7, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hint-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 193, 7, 0.2), transparent);
+  animation: hintShimmer 2s infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hint-available:before {
+  opacity: 1;
+}
+
+.hint-available {
+  animation: hintPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.4);
+}
+
+@keyframes hintShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes hintPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
+  }
+}
+
 .pulse-on-hover:hover {
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.hint-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(255, 193, 7, 0.5);
 }
 
 .level-indicator {
@@ -843,82 +986,6 @@ watch(
   background: linear-gradient(90deg, #4caf50, #8bc34a);
   border-radius: 2px;
   transition: width 0.3s ease;
-}
-
-/* Floating Action Buttons */
-.floating-actions {
-  position: absolute;
-  right: 20px;
-  bottom: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  z-index: 50;
-}
-
-.action-fab {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.action-fab:hover {
-  transform: scale(1.1);
-}
-
-.fab-glow {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  right: -50%;
-  bottom: -50%;
-  opacity: 0;
-  border-radius: 50%;
-  transition: opacity 0.3s ease;
-}
-
-.action-fab:hover .fab-glow {
-  opacity: 0.3;
-  animation: fabGlow 1s ease-in-out infinite;
-}
-
-@keyframes fabGlow {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-}
-
-.hint-glow {
-  background: radial-gradient(circle, #ffc107, transparent);
-}
-
-.shuffle-glow {
-  background: radial-gradient(circle, #9c27b0, transparent);
-}
-
-.clear-glow {
-  background: radial-gradient(circle, #f44336, transparent);
-}
-
-.fab-pulse {
-  animation: fabPulse 2s ease-in-out infinite;
-}
-
-@keyframes fabPulse {
-  0%,
-  100% {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  }
-  50% {
-    box-shadow: 0 8px 35px rgba(255, 193, 7, 0.5);
-  }
 }
 
 /* Success Dialog */
@@ -1302,6 +1369,172 @@ watch(
   font-size: 1.1rem;
 }
 
+/* Hint Result Dialog */
+.hint-result-dialog .q-dialog__inner {
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.hint-result-card {
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  animation: hintResultAppear 0.6s ease-out;
+  max-width: 300px;
+}
+
+@keyframes hintResultAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.hint-result-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.hint-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.hint-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffc107;
+  border-radius: 50%;
+  animation: hintParticleExplode 1.2s ease-out;
+}
+
+@keyframes hintParticleExplode {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.hint-result-content {
+  padding: 30px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.hint-result-icon-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.hint-result-icon {
+  animation: hintIconBounce 0.8s ease-out;
+  filter: drop-shadow(0 0 15px rgba(255, 193, 7, 0.6));
+}
+
+@keyframes hintIconBounce {
+  0% {
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.3) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.hint-glow-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(255, 193, 7, 0.4), transparent);
+  border-radius: 50%;
+  animation: hintGlowPulse 1.5s ease-out;
+}
+
+@keyframes hintGlowPulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.hint-result-title {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hint-result-word {
+  color: #ffc107;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 15px rgba(255, 193, 7, 0.5);
+  animation: wordGlow 1s ease-out;
+}
+
+@keyframes wordGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hint-cost-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
 /* Custom Tooltip */
 .custom-tooltip {
   background: rgba(0, 0, 0, 0.8);
@@ -1324,23 +1557,13 @@ watch(
     border-radius: 20px;
   }
 
-  .floating-actions {
-    right: 15px;
-    bottom: 20px;
-    gap: 12px;
-  }
-
-  .action-fab {
-    width: 50px;
-    height: 50px;
-  }
-
   .game-header {
     padding: 10px 15px;
     min-height: 55px;
   }
 
-  .header-btn {
+  .header-btn,
+  .hint-btn {
     width: 40px;
     height: 40px;
   }
@@ -1370,12 +1593,17 @@ watch(
     gap: 30px;
   }
 
-  .word-found-content {
+  .word-found-content,
+  .hint-result-content {
     padding: 25px;
   }
 
   .found-word-text {
     font-size: 1.3rem;
+  }
+
+  .hint-result-word {
+    font-size: 1.5rem;
   }
 }
 
@@ -1383,16 +1611,6 @@ watch(
   .game-arena {
     padding: 12px;
     gap: 15px;
-  }
-
-  .floating-actions {
-    right: 12px;
-    bottom: 15px;
-  }
-
-  .action-fab {
-    width: 45px;
-    height: 45px;
   }
 
   .header-actions {
@@ -1405,6 +1623,11 @@ watch(
 
   .gems-count {
     font-size: 0.8rem;
+  }
+
+  .hint-result-word {
+    font-size: 1.3rem;
+    letter-spacing: 2px;
   }
 }
 </style>
