@@ -2,3 +2,4 @@
 src-capacitor/
 src/pages/GamePage.vue
 src/pages/LevelSelectionPage.vue
+node_modules

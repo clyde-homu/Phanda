@@ -152,7 +152,8 @@ const router = useRouter();
 const gameStore = useGameStore();
 const themeStore = useThemeStore();
 
-const { currentLevel, userProgress, foundWords, connectedLetterIndices } = gameStore;
+const { currentLevel, userProgress, foundWords, connectedLetterIndices, totalCompletedLevels } =
+  gameStore;
 
 const shuffledLetters = ref<string[]>([]);
 const currentWord = ref('');
@@ -247,7 +248,7 @@ const handleLevelComplete = async () => {
 const handleThemeChanged = (themeId: string) => {
   console.log('Theme changed to:', themeId);
   // Check for theme unlocks based on current progress
-  themeStore.checkThemeUnlocks(userProgress.completedLevels.length);
+  themeStore.checkThemeUnlocks(totalCompletedLevels);
 };
 
 onMounted(async () => {
