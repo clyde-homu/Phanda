@@ -6,8 +6,13 @@
     class="hint-result-dialog"
     transition-show="fade"
     transition-hide="fade"
+    :content-style="{ background: 'transparent' }"
+    :backdrop-filter="'blur(2px)'"
   >
-    <q-card class="hint-result-card glass-morphism">
+    <q-card
+      class="hint-result-card glass-morphism"
+      style="background: rgba(30, 30, 40, 0.95) !important"
+    >
       <div class="hint-result-bg">
         <div class="hint-particles">
           <div v-for="n in 8" :key="n" class="hint-particle" :style="getHintParticleStyle(n)"></div>
@@ -56,13 +61,26 @@ const getHintParticleStyle = (index: number) => {
 
 <style scoped>
 /* Hint Result Dialog */
+.hint-result-dialog {
+  background: transparent !important;
+}
+
 .hint-result-dialog :deep(.q-dialog__inner) {
   padding: 20px;
+  background: transparent !important;
 }
 
 .hint-result-dialog :deep(.q-dialog__backdrop) {
   background-color: rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(2px);
+}
+
+.hint-result-dialog :deep(.q-dialog__inner--minimized) {
+  background: transparent !important;
+}
+
+.hint-result-dialog :deep(.q-dialog__inner > div) {
+  background: transparent !important;
 }
 
 .hint-result-card {

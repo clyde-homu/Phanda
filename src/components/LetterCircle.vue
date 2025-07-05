@@ -202,12 +202,19 @@ const updateMousePosition = (clientX: number, clientY: number) => {
   const svgX = ((clientX - rect.left) / rect.width) * circleSize.value;
   const svgY = ((clientY - rect.top) / rect.height) * circleSize.value;
 
-  currentMousePosition.value = { x: svgX, y: svgY };
+  // Only update if position actually changed (reduces unnecessary re-renders)
+  if (currentMousePosition.value.x !== svgX || currentMousePosition.value.y !== svgY) {
+    currentMousePosition.value = { x: svgX, y: svgY };
+  }
 };
 
 const handleMouseMove = (event: MouseEvent) => {
   if (!isDrawingLine.value) return;
-  updateMousePosition(event.clientX, event.clientY);
+
+  // Update position immediately for real-time feedback
+  requestAnimationFrame(() => {
+    updateMousePosition(event.clientX, event.clientY);
+  });
 
   // Check if mouse is over a letter for precise connection
   const letterElements = document.querySelectorAll('.letter-item');
@@ -224,9 +231,9 @@ const handleMouseMove = (event: MouseEvent) => {
       Math.pow(event.clientX - centerX, 2) + Math.pow(event.clientY - centerY, 2),
     );
 
-    // Precise tolerance for mouse - must be close to letter center
-    const letterRadius = (rect.width / 2) * 0.7; // 70% of letter radius for mouse precision
-    const nearbyRadius = (rect.width / 2) * 0.9; // 90% for nearby detection
+    // More generous tolerance for better responsiveness
+    const letterRadius = (rect.width / 2) * 0.85; // 85% of letter radius
+    const nearbyRadius = rect.width / 2; // Full radius for nearby detection
 
     if (distance <= letterRadius && distance < minDistance) {
       targetIndex = index;
@@ -251,13 +258,15 @@ const handleTouchMove = (event: TouchEvent) => {
   const touch = event.touches[0];
   if (!touch) return;
 
-  // Update line position to follow touch
-  updateMousePosition(touch.clientX, touch.clientY);
+  // Update line position immediately for real-time feedback
+  requestAnimationFrame(() => {
+    updateMousePosition(touch.clientX, touch.clientY);
+  });
 
   // Get all letter elements
   const letterElements = document.querySelectorAll('.letter-item');
 
-  // Find which letter is under the touch point with precise tolerance
+  // Find which letter is under the touch point
   let targetIndex = -1;
   let nearbyTargetIndex = -1;
   let minDistance = Infinity;
@@ -271,9 +280,9 @@ const handleTouchMove = (event: TouchEvent) => {
       Math.pow(touch.clientX - centerX, 2) + Math.pow(touch.clientY - centerY, 2),
     );
 
-    // More precise tolerance - user must touch closer to the letter center
-    const letterRadius = (rect.width / 2) * 0.8; // 80% of letter radius for precision
-    const nearbyRadius = rect.width / 2; // Full radius for nearby detection
+    // More generous tolerance for touch responsiveness
+    const letterRadius = rect.width / 2; // Full radius for better touch detection
+    const nearbyRadius = rect.width * 0.6; // Slightly larger for nearby detection
 
     if (distance <= letterRadius && distance < minDistance) {
       targetIndex = index;
@@ -445,8 +454,10 @@ onUnmounted(() => {
 
 .connection-path {
   filter: drop-shadow(0 0 8px rgba(66, 165, 245, 0.6));
-  /* Remove transition for smoother drawing */
   stroke: url(#gradient);
+  /* Ensure no delay in path updates */
+  transition: none !important;
+  will-change: d;
 }
 
 .letter-item {
@@ -594,26 +605,44 @@ onUnmounted(() => {
 }
 
 .shuffle-center {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
-  backdrop-filter: blur(15px);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .shuffle-button {
-  width: 50px;
-  height: 50px;
-  min-height: 50px;
-  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
-  box-shadow: 0 5px 20px rgba(156, 39, 176, 0.4);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 55px;
+  height: 55px;
+  min-height: 55px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+  box-shadow:
+    0 6px 25px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .shuffle-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 25px rgba(156, 39, 176, 0.6);
+  transform: scale(1.08) rotate(180deg);
+  box-shadow:
+    0 8px 30px rgba(139, 92, 246, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.shuffle-button:active {
+  transform: scale(0.95);
+  box-shadow:
+    0 3px 15px rgba(139, 92, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.shuffle-button :deep(.q-icon) {
+  font-size: 28px !important;
+  color: white !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 @keyframes drawPath {

@@ -58,7 +58,7 @@
         color="amber"
         size="md"
         @click="$emit('use-hint')"
-        :disable="!canUseHint || availableHints.length === 0"
+        :disable="!props.isGameReady || !canUseHint || availableHints.length === 0"
         class="hint-btn pulse-on-hover"
         :class="{ 'hint-available': canUseHint && availableHints.length > 0 }"
       >
@@ -88,6 +88,7 @@ interface Props {
   currentLevel: GameLevel | undefined;
   userProgress: UserProgress;
   foundWords: string[];
+  isGameReady?: boolean;
 }
 
 const props = defineProps<Props>();

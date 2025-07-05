@@ -18,6 +18,7 @@
       <CrosswordGrid
         :target-words="currentLevel?.targetWords || []"
         :found-words="foundWords"
+        :is-hint-reveal="isHintReveal || false"
         class="enhanced-crossword"
       />
     </div>
@@ -68,6 +69,7 @@ interface Props {
   shuffledLetters: string[];
   connectedLetterIndices: number[];
   currentWord: string;
+  isHintReveal?: boolean;
 }
 
 defineProps<Props>();

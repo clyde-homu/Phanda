@@ -31,6 +31,7 @@ import { ref, computed, watch } from 'vue';
 interface Props {
   targetWords: string[];
   foundWords: string[];
+  isHintReveal?: boolean;
 }
 
 interface OptimizedCell {
@@ -281,11 +282,18 @@ const gridContainerStyle = computed(() => {
 });
 
 const animateWordReveal = (word: string) => {
+  // Guard against empty or uninitialized states
+  if (!props.targetWords || props.targetWords.length === 0) return;
+  if (!optimizedCells.value || optimizedCells.value.length === 0) return;
+
   const wordIndex = props.targetWords.indexOf(word);
   if (wordIndex === -1) return;
 
   // Find all cells for this word and animate them with stagger
   const wordCells = optimizedCells.value.filter((cell) => cell.wordIds.includes(wordIndex));
+
+  // Only animate if cells exist
+  if (wordCells.length === 0) return;
 
   wordCells.forEach((cell, index) => {
     setTimeout(() => {
@@ -301,6 +309,11 @@ const animateWordReveal = (word: string) => {
 watch(
   () => props.foundWords,
   (newFoundWords, oldFoundWords) => {
+    // Skip animation if this is a hint reveal
+    if (props.isHintReveal) {
+      return;
+    }
+
     // Animate newly found words
     const newWords = newFoundWords.filter((word) => !oldFoundWords?.includes(word));
     newWords.forEach((word) => {

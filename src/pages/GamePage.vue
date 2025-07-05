@@ -8,6 +8,7 @@
       :current-level="currentLevel || undefined"
       :user-progress="userProgress"
       :found-words="foundWords"
+      :is-game-ready="isGameReady"
       @back="goBack"
       @use-hint="useHint"
       @show-theme-selector="showThemeSelector = true"
@@ -20,6 +21,7 @@
       :shuffled-letters="shuffledLetters"
       :connected-letter-indices="connectedLetterIndices"
       :current-word="currentWord"
+      :is-hint-reveal="isHintReveal"
       @letter-selection="handleLetterSelection"
       @word-submitted="handleWordSubmission"
       @letters-cleared="handleLettersClear"
@@ -76,6 +78,7 @@ const showThemeSelector = ref(false);
 const showHintResult = ref(false);
 const lastFoundWord = ref('');
 const revealedWord = ref('');
+const isHintReveal = ref(false);
 
 // Computed properties
 const availableHints = computed(() => {
@@ -84,6 +87,15 @@ const availableHints = computed(() => {
 });
 
 const canUseHint = computed(() => userProgress.gems >= 5);
+
+const isGameReady = computed(() => {
+  return !!(
+    currentLevel &&
+    currentLevel.targetWords &&
+    currentLevel.targetWords.length > 0 &&
+    shuffledLetters.value.length > 0
+  );
+});
 
 const goBack = async () => {
   gameStore.resetGame();
@@ -129,6 +141,12 @@ const handleLettersClear = () => {
 };
 
 const useHint = async () => {
+  // Ensure level is loaded and has words
+  if (!currentLevel || !currentLevel.targetWords || currentLevel.targetWords.length === 0) {
+    console.warn('Cannot use hint: level not loaded or no target words');
+    return;
+  }
+
   if (!canUseHint.value || availableHints.value.length === 0) {
     return;
   }
@@ -142,15 +160,30 @@ const useHint = async () => {
   // Check if randomWord exists (TypeScript safety)
   if (!randomWord) {
     console.error('No available hints found');
+    // Refund gems if hint failed
+    userProgress.gems += 5;
     return;
   }
+
+  // Mark this as a hint reveal to prevent animation conflicts
+  isHintReveal.value = true;
 
   // Add word to found words
   gameStore.addFoundWord(randomWord);
   revealedWord.value = randomWord;
 
-  // Show hint result
-  showHintResult.value = true;
+  // Only show hint result if we have a valid word
+  if (revealedWord.value && revealedWord.value.length > 0) {
+    // Small delay to ensure all state updates are complete before showing dialog
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    showHintResult.value = true;
+  } else {
+    console.error('Cannot show hint dialog: no word to reveal');
+    // Refund gems if dialog can't be shown
+    userProgress.gems += 5;
+    isHintReveal.value = false;
+    return;
+  }
 
   // Trigger haptic feedback
   await triggerHapticFeedback(ImpactStyle.Medium);
@@ -158,6 +191,10 @@ const useHint = async () => {
   // Hide hint result after 2 seconds
   setTimeout(() => {
     showHintResult.value = false;
+    // Reset hint reveal flag after animation completes
+    setTimeout(() => {
+      isHintReveal.value = false;
+    }, 300);
   }, 2000);
 
   // Check if level is complete
