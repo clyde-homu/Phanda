@@ -38,6 +38,7 @@
       <LetterCircle
         :letters="shuffledLetters"
         :selected-indices="connectedLetterIndices"
+        :is-shuffling="isShuffling || false"
         @letter-selected="handleLetterSelection"
         @word-submitted="$emit('word-submitted', $event)"
         @letters-cleared="$emit('letters-cleared')"
@@ -70,6 +71,7 @@ interface Props {
   connectedLetterIndices: number[];
   currentWord: string;
   isHintReveal?: boolean;
+  isShuffling?: boolean;
 }
 
 defineProps<Props>();
@@ -114,7 +116,11 @@ const handleLetterSelection = (indices: number[], word: string) => {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .floating-container:hover {
@@ -308,6 +314,7 @@ const handleLetterSelection = (indices: number[], word: string) => {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backface-visibility: hidden;
 }
 
 /* Responsive Design */

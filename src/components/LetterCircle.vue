@@ -27,7 +27,7 @@
 
       <div
         v-for="(letter, index) in letters"
-        :key="`${letter}-${index}`"
+        :key="index"
         class="letter-item"
         :class="{
           'letter-selected': selectedIndices.includes(index),
@@ -72,9 +72,10 @@
         icon="shuffle"
         size="md"
         @click="emit('shuffle-letters')"
+        :disable="props.isShuffling"
         class="shuffle-button"
       >
-        <q-tooltip>Shuffle letters</q-tooltip>
+        <q-tooltip>{{ props.isShuffling ? 'Shuffling...' : 'Shuffle letters' }}</q-tooltip>
       </q-btn>
     </div>
   </div>
@@ -88,6 +89,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 interface Props {
   letters: string[];
   selectedIndices: number[];
+  isShuffling?: boolean;
 }
 
 interface Emits {
@@ -437,6 +439,10 @@ onUnmounted(() => {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  /* Prevent flash during shuffle */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .connection-lines {
@@ -472,6 +478,11 @@ onUnmounted(() => {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
+  /* Smooth transition for shuffle */
+  transition:
+    left 0.3s ease,
+    top 0.3s ease,
+    transform 0.3s ease;
 }
 
 .letter-content {
@@ -637,6 +648,14 @@ onUnmounted(() => {
   box-shadow:
     0 3px 15px rgba(139, 92, 246, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Prevent any flash during shuffle */
+.letter-circle * {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
 }
 
 .shuffle-button :deep(.q-icon) {

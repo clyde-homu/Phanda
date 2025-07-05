@@ -9,6 +9,7 @@
       :user-progress="userProgress"
       :found-words="foundWords"
       :is-game-ready="isGameReady"
+      :is-processing-hint="isProcessingHint"
       @back="goBack"
       @use-hint="useHint"
       @show-theme-selector="showThemeSelector = true"
@@ -22,6 +23,7 @@
       :connected-letter-indices="connectedLetterIndices"
       :current-word="currentWord"
       :is-hint-reveal="isHintReveal"
+      :is-shuffling="isShuffling"
       @letter-selection="handleLetterSelection"
       @word-submitted="handleWordSubmission"
       @letters-cleared="handleLettersClear"
@@ -79,6 +81,8 @@ const showHintResult = ref(false);
 const lastFoundWord = ref('');
 const revealedWord = ref('');
 const isHintReveal = ref(false);
+const isProcessingHint = ref(false);
+const isShuffling = ref(false);
 
 // Computed properties
 const availableHints = computed(() => {
@@ -141,6 +145,12 @@ const handleLettersClear = () => {
 };
 
 const useHint = async () => {
+  // Prevent rapid clicks
+  if (isProcessingHint.value) {
+    console.log('Hint already being processed');
+    return;
+  }
+
   // Ensure level is loaded and has words
   if (!currentLevel || !currentLevel.targetWords || currentLevel.targetWords.length === 0) {
     console.warn('Cannot use hint: level not loaded or no target words');
@@ -150,6 +160,9 @@ const useHint = async () => {
   if (!canUseHint.value || availableHints.value.length === 0) {
     return;
   }
+
+  // Set processing flag
+  isProcessingHint.value = true;
 
   // Deduct gems
   userProgress.gems -= 5;
@@ -182,6 +195,7 @@ const useHint = async () => {
     // Refund gems if dialog can't be shown
     userProgress.gems += 5;
     isHintReveal.value = false;
+    isProcessingHint.value = false;
     return;
   }
 
@@ -191,9 +205,10 @@ const useHint = async () => {
   // Hide hint result after 2 seconds
   setTimeout(() => {
     showHintResult.value = false;
-    // Reset hint reveal flag after animation completes
+    // Reset flags after animation completes
     setTimeout(() => {
       isHintReveal.value = false;
+      isProcessingHint.value = false;
     }, 300);
   }, 2000);
 
@@ -207,9 +222,29 @@ const useHint = async () => {
 };
 
 const shuffleLetters = async () => {
+  // Prevent rapid clicks
+  if (isShuffling.value) {
+    console.log('Shuffle already in progress');
+    return;
+  }
+
+  isShuffling.value = true;
+
   await triggerHapticFeedback(ImpactStyle.Light);
   if (currentLevel) {
-    shuffledLetters.value = shuffleArray(currentLevel.letters);
+    // Use nextTick to ensure smooth transition
+    const newOrder = shuffleArray(currentLevel.letters);
+
+    // Small delay to prevent flash
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    shuffledLetters.value = newOrder;
+
+    // Reset flag after animation completes (300ms transition)
+    setTimeout(() => {
+      isShuffling.value = false;
+    }, 350);
+  } else {
+    isShuffling.value = false;
   }
 };
 
