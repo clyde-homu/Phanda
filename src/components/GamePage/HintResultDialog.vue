@@ -4,6 +4,8 @@
     @update:model-value="$emit('update:modelValue', $event)"
     no-backdrop-dismiss
     class="hint-result-dialog"
+    transition-show="fade"
+    transition-hide="fade"
   >
     <q-card class="hint-result-card glass-morphism">
       <div class="hint-result-bg">
@@ -58,10 +60,16 @@ const getHintParticleStyle = (index: number) => {
   padding: 20px;
 }
 
+.hint-result-dialog :deep(.q-dialog__backdrop) {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(2px);
+}
+
 .hint-result-card {
   overflow: hidden;
   position: relative;
   min-width: 300px;
+  background: rgba(30, 30, 40, 0.95) !important;
 }
 
 /* Hint Result Background */
@@ -194,8 +202,8 @@ const getHintParticleStyle = (index: number) => {
 /* Glass Morphism */
 .glass-morphism {
   backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(30, 30, 40, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 </style>

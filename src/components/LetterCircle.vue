@@ -401,8 +401,8 @@ onUnmounted(() => {
 <style scoped>
 .letter-circle-container {
   position: relative;
-  width: min(80vw, 350px);
-  height: min(80vw, 350px);
+  width: min(70vw, 300px);
+  height: min(70vw, 300px);
   margin: 0 auto;
   touch-action: none;
   user-select: none;
@@ -654,25 +654,42 @@ onUnmounted(() => {
   }
 }
 
-/* Large devices - ensure consistency */
-@media (min-width: 768px) {
+/* Responsive adjustments */
+@media (max-height: 700px) {
   .letter-circle-container {
-    width: min(70vw, 500px);
-    height: min(70vw, 500px);
+    width: min(60vw, 250px);
+    height: min(60vw, 250px);
   }
 
   .letter-item {
-    width: clamp(60px, 8vw, 90px);
-    height: clamp(60px, 8vw, 90px);
+    width: clamp(40px, 10vw, 60px);
+    height: clamp(40px, 10vw, 60px);
   }
 
   .letter-content {
-    font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+  }
+}
+
+/* Large devices - ensure consistency */
+@media (min-width: 768px) {
+  .letter-circle-container {
+    width: min(50vw, 350px);
+    height: min(50vw, 350px);
+  }
+
+  .letter-item {
+    width: clamp(50px, 7vw, 70px);
+    height: clamp(50px, 7vw, 70px);
+  }
+
+  .letter-content {
+    font-size: clamp(1.2rem, 2vw, 1.8rem);
   }
 
   .center-circle {
-    width: clamp(100px, 15vw, 140px);
-    height: clamp(100px, 15vw, 140px);
+    width: clamp(90px, 12vw, 120px);
+    height: clamp(90px, 12vw, 120px);
   }
 }
 

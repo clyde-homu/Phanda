@@ -267,8 +267,8 @@ const gridContainerStyle = computed(() => {
 
   // Calculate responsive cell size
   // This ensures the grid fits within the viewport
-  const maxWidth = `min(${baseCellSize}px, calc((90vw - 60px) / ${gridCols}))`;
-  const maxHeight = `min(${baseCellSize}px, calc((50vh - 80px) / ${gridRows}))`;
+  const maxWidth = `min(${baseCellSize}px, calc((85vw - 50px) / ${gridCols}))`;
+  const maxHeight = `min(${baseCellSize}px, calc((35vh - 60px) / ${gridRows}))`;
   const cellSize = `min(${maxWidth}, ${maxHeight})`;
 
   return {
@@ -293,8 +293,8 @@ const animateWordReveal = (word: string) => {
 
       setTimeout(() => {
         animatedCells.value = animatedCells.value.filter((id) => id !== cell.id);
-      }, 800);
-    }, index * 100); // Staggered animation
+      }, 600);
+    }, index * 60); // Faster, smoother staggered animation
   });
 };
 
@@ -318,6 +318,11 @@ watch(
   align-items: center;
   justify-content: center;
   padding: 10px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: auto;
 }
 
 .grid-container {
@@ -325,8 +330,8 @@ watch(
   display: grid;
   grid-template-rows: repeat(var(--grid-rows, 8), var(--cell-size, 50px));
   grid-template-columns: repeat(var(--grid-cols, 8), var(--cell-size, 50px));
-  gap: 3px;
-  padding: 25px;
+  gap: clamp(2px, 0.5vw, 3px);
+  padding: clamp(15px, 3vw, 25px);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(20px);
   border-radius: 20px;
@@ -334,6 +339,8 @@ watch(
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin: auto;
+  max-width: 100%;
 }
 
 .crossword-cell {
@@ -386,7 +393,8 @@ watch(
 }
 
 .cell-animated {
-  animation: cellReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cellReveal 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.3s ease;
 }
 
 .cell-content {
@@ -445,17 +453,17 @@ watch(
 
 @keyframes cellReveal {
   0% {
-    transform: scale(0.3) rotate(-10deg);
+    transform: scale(0.8);
     opacity: 0;
-    background: linear-gradient(135deg, rgba(255, 235, 59, 0.9), rgba(255, 193, 7, 0.8));
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(56, 142, 60, 0.2));
   }
-  50% {
-    transform: scale(1.15) rotate(5deg);
-    opacity: 1;
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 152, 0, 0.8));
+  40% {
+    transform: scale(1.05);
+    opacity: 0.7;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.6), rgba(56, 142, 60, 0.5));
   }
   100% {
-    transform: scale(1.02) rotate(0deg);
+    transform: scale(1.02);
     opacity: 1;
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(56, 142, 60, 0.8));
   }
@@ -463,11 +471,8 @@ watch(
 
 @keyframes letterAppear {
   0% {
-    transform: scale(0.5);
+    transform: scale(0.8);
     opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
   }
   100% {
     transform: scale(1);

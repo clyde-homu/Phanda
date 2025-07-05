@@ -90,19 +90,15 @@ const handleLetterSelection = (indices: number[], word: string) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  padding-top: 80px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  gap: 15px;
+  padding: 15px;
+  padding-top: 70px;
+  overflow: hidden;
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 100vw;
-  /* Prevent body scroll */
-  -webkit-overflow-scrolling: touch;
-  /* Optimize scrolling performance */
-  will-change: scroll-position;
+  height: 100%;
+  max-height: calc(100vh - 70px);
 }
 
 /* Floating Container Base */
@@ -110,9 +106,9 @@ const handleLetterSelection = (indices: number[], word: string) => {
   position: relative;
   backdrop-filter: blur(16px);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 20px;
+  padding: 15px;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -201,24 +197,33 @@ const handleLetterSelection = (indices: number[], word: string) => {
 
 /* Crossword Container */
 .crossword-container {
-  flex-shrink: 0;
+  flex: 1;
   width: 100%;
   max-width: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .enhanced-crossword {
   margin: 0 auto;
   width: 100%;
   max-width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Letter Circle Container */
 .letter-circle-container {
   position: relative;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 20px;
 }
 
 /* Magnetic Field Effect */
@@ -306,13 +311,13 @@ const handleLetterSelection = (indices: number[], word: string) => {
 /* Responsive Design */
 @media (max-width: 768px) {
   .game-arena {
-    padding: 15px;
-    padding-top: 80px;
-    gap: 15px;
+    padding: 12px;
+    padding-top: 65px;
+    gap: 12px;
   }
 
   .floating-container {
-    padding: 15px;
+    padding: 12px;
   }
 
   .section-title {
@@ -320,19 +325,44 @@ const handleLetterSelection = (indices: number[], word: string) => {
   }
 
   .word-text {
-    font-size: 18px;
+    font-size: 16px;
+  }
+
+  .crossword-container {
+    max-height: 45vh;
   }
 }
 
 @media (max-width: 480px) {
   .game-arena {
     padding: 10px;
+    padding-top: 60px;
     gap: 10px;
   }
 
   .floating-container {
-    padding: 12px;
+    padding: 10px;
     border-radius: 16px;
+  }
+
+  .crossword-container {
+    max-height: 40vh;
+  }
+}
+
+/* Ensure content fits in viewport */
+@media (max-height: 700px) {
+  .game-arena {
+    padding-top: 60px;
+    gap: 10px;
+  }
+
+  .floating-container {
+    padding: 10px;
+  }
+
+  .crossword-container {
+    max-height: 35vh;
   }
 }
 </style>
