@@ -1,15 +1,15 @@
 <template>
   <div class="crossword-grid">
     <div class="grid-container" :style="gridContainerStyle">
-      <div 
-        v-for="cell in optimizedCells" 
+      <div
+        v-for="cell in optimizedCells"
         :key="cell.id"
         class="crossword-cell"
         :class="{
           'cell-revealed': cell.isRevealed,
           'cell-intersection': cell.isIntersection,
           'cell-animated': animatedCells.includes(cell.id),
-          'cell-word-complete': cell.isWordComplete
+          'cell-word-complete': cell.isWordComplete,
         }"
         :style="cell.position"
       >
@@ -80,7 +80,7 @@ const optimizedCells = computed(() => {
               wordIndex: i,
               layoutIndex: j,
               layout,
-              char: word[i]
+              char: word[i],
             };
           }
         }
@@ -97,9 +97,9 @@ const optimizedCells = computed(() => {
       direction: 'horizontal',
       startRow: 3,
       startCol: 1,
-      cells: []
+      cells: [],
     };
-    
+
     for (let i = 0; i < firstWord.length; i++) {
       const cellId = `${layout.startRow}-${layout.startCol + i}`;
       const cell: OptimizedCell = {
@@ -113,15 +113,15 @@ const optimizedCells = computed(() => {
           '--grid-row': layout.startRow,
           '--grid-column': layout.startCol + i,
           gridRow: layout.startRow,
-          gridColumn: layout.startCol + i
+          gridColumn: layout.startCol + i,
         },
-        ...(i === 0 && { number: 1 })
+        ...(i === 0 && { number: 1 }),
       };
-      
+
       layout.cells.push(cell);
       cellMap.set(cellId, cell);
     }
-    
+
     wordLayouts.push(layout);
   }
 
@@ -130,11 +130,11 @@ const optimizedCells = computed(() => {
     const word = words[wordIndex];
     if (!word) continue;
     const intersection = findBestIntersection(word, wordLayouts);
-    
+
     if (intersection) {
       const { wordIndex: wIdx, layoutIndex: lIdx, layout } = intersection;
       const direction = layout.direction === 'horizontal' ? 'vertical' : 'horizontal';
-      
+
       let startRow, startCol;
       if (direction === 'vertical') {
         startRow = layout.startRow - wIdx;
@@ -143,20 +143,20 @@ const optimizedCells = computed(() => {
         startRow = layout.startRow + lIdx;
         startCol = layout.startCol - wIdx;
       }
-      
+
       const newLayout: WordLayout = {
         word,
         direction,
         startRow,
         startCol,
-        cells: []
+        cells: [],
       };
-      
+
       for (let i = 0; i < word.length; i++) {
         const row = direction === 'horizontal' ? startRow : startRow + i;
         const col = direction === 'horizontal' ? startCol + i : startCol;
         const cellId = `${row}-${col}`;
-        
+
         let cell = cellMap.get(cellId);
         if (cell) {
           // This is an intersection
@@ -179,37 +179,37 @@ const optimizedCells = computed(() => {
               '--grid-row': row,
               '--grid-column': col,
               gridRow: row,
-              gridColumn: col
+              gridColumn: col,
             },
-            ...(i === 0 && { number: wordIndex + 1 })
+            ...(i === 0 && { number: wordIndex + 1 }),
           };
           cellMap.set(cellId, cell);
         }
-        
+
         if (cell) {
           newLayout.cells.push(cell);
         }
       }
-      
+
       wordLayouts.push(newLayout);
     } else {
       // Place word separately if no intersection found
       const direction = wordIndex % 2 === 0 ? 'horizontal' : 'vertical';
       const offset = Math.floor(wordIndex / 2) * 2;
-      
+
       const layout: WordLayout = {
         word,
         direction,
         startRow: direction === 'horizontal' ? 1 + offset : 1,
         startCol: direction === 'horizontal' ? 1 : 5 + offset,
-        cells: []
+        cells: [],
       };
-      
+
       for (let i = 0; i < word.length; i++) {
         const row = direction === 'horizontal' ? layout.startRow : layout.startRow + i;
         const col = direction === 'horizontal' ? layout.startCol + i : layout.startCol;
         const cellId = `${row}-${col}`;
-        
+
         const cell: OptimizedCell = {
           id: cellId,
           letter: word[i] || '',
@@ -221,15 +221,15 @@ const optimizedCells = computed(() => {
             '--grid-row': row,
             '--grid-column': col,
             gridRow: row,
-            gridColumn: col
+            gridColumn: col,
           },
-          ...(i === 0 && { number: wordIndex + 1 })
+          ...(i === 0 && { number: wordIndex + 1 }),
         };
-        
+
         layout.cells.push(cell);
         cellMap.set(cellId, cell);
       }
-      
+
       wordLayouts.push(layout);
     }
   }
@@ -243,24 +243,36 @@ const gridContainerStyle = computed(() => {
   if (cells.length === 0) return {};
 
   // Calculate grid bounds
-  const minRow = Math.min(...cells.map(c => c.position.gridRow || c.position['--grid-row'] || 1));
-  const maxRow = Math.max(...cells.map(c => c.position.gridRow || c.position['--grid-row'] || 1));
-  const minCol = Math.min(...cells.map(c => c.position.gridColumn || c.position['--grid-column'] || 1));
-  const maxCol = Math.max(...cells.map(c => c.position.gridColumn || c.position['--grid-column'] || 1));
-  
+  const minRow = Math.min(...cells.map((c) => c.position.gridRow || c.position['--grid-row'] || 1));
+  const maxRow = Math.max(...cells.map((c) => c.position.gridRow || c.position['--grid-row'] || 1));
+  const minCol = Math.min(
+    ...cells.map((c) => c.position.gridColumn || c.position['--grid-column'] || 1),
+  );
+  const maxCol = Math.max(
+    ...cells.map((c) => c.position.gridColumn || c.position['--grid-column'] || 1),
+  );
+
   const gridRows = maxRow - minRow + 1;
   const gridCols = maxCol - minCol + 1;
 
-  // Dynamic cell sizing
+  // Dynamic cell sizing based on grid dimensions
   const maxDimension = Math.max(gridRows, gridCols);
-  let cellSize = 50;
-  
-  if (maxDimension > 6) cellSize = 45;
-  if (maxDimension > 8) cellSize = 40;
-  if (maxDimension > 10) cellSize = 35;
+
+  // Base cell size calculation
+  let baseCellSize = 50;
+  if (maxDimension > 6) baseCellSize = 45;
+  if (maxDimension > 8) baseCellSize = 40;
+  if (maxDimension > 10) baseCellSize = 35;
+  if (maxDimension > 12) baseCellSize = 30;
+
+  // Calculate responsive cell size
+  // This ensures the grid fits within the viewport
+  const maxWidth = `min(${baseCellSize}px, calc((90vw - 60px) / ${gridCols}))`;
+  const maxHeight = `min(${baseCellSize}px, calc((50vh - 80px) / ${gridRows}))`;
+  const cellSize = `min(${maxWidth}, ${maxHeight})`;
 
   return {
-    '--cell-size': `${cellSize}px`,
+    '--cell-size': cellSize,
     '--grid-rows': gridRows,
     '--grid-cols': gridCols,
     '--min-row': minRow,
@@ -273,16 +285,14 @@ const animateWordReveal = (word: string) => {
   if (wordIndex === -1) return;
 
   // Find all cells for this word and animate them with stagger
-  const wordCells = optimizedCells.value.filter(cell => 
-    cell.wordIds.includes(wordIndex)
-  );
-  
+  const wordCells = optimizedCells.value.filter((cell) => cell.wordIds.includes(wordIndex));
+
   wordCells.forEach((cell, index) => {
     setTimeout(() => {
       animatedCells.value.push(cell.id);
-      
+
       setTimeout(() => {
-        animatedCells.value = animatedCells.value.filter(id => id !== cell.id);
+        animatedCells.value = animatedCells.value.filter((id) => id !== cell.id);
       }, 800);
     }, index * 100); // Staggered animation
   });
@@ -321,7 +331,7 @@ watch(
   backdrop-filter: blur(20px);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -357,7 +367,7 @@ watch(
 .cell-revealed {
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(56, 142, 60, 0.8));
   border-color: rgba(76, 175, 80, 0.8);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(76, 175, 80, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   transform: scale(1.02);
@@ -366,7 +376,7 @@ watch(
 .cell-intersection {
   background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(255, 152, 0, 0.8));
   border-color: rgba(255, 193, 7, 0.8);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(255, 193, 7, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
@@ -480,7 +490,8 @@ watch(
 }
 
 @keyframes intersectionPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
@@ -495,19 +506,55 @@ watch(
     padding: 15px;
     gap: 2px;
   }
-  
+
   .crossword-cell {
     border-radius: 8px;
   }
-  
+
   .cell-letter {
     font-size: calc(var(--cell-size, 50px) * 0.4);
   }
-  
+  /* Additional responsive improvements */
+  .crossword-grid {
+    width: 100%;
+    max-width: 100%;
+    overflow: auto;
+  }
+
+  .grid-container {
+    margin: auto;
+    max-width: 100%;
+  }
+
+  /* Ensure grid fits in viewport */
+  @media (max-width: 768px) {
+    .grid-container {
+      max-width: calc(100vw - 40px);
+    }
+
+    .crossword-grid {
+      padding: 5px;
+    }
+  }
+
+  @media (max-height: 600px) {
+    .grid-container {
+      max-height: calc(100vh - 200px);
+      overflow: auto;
+    }
+  }
+
+  /* Landscape mode adjustments */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .grid-container {
+      max-height: calc(100vh - 150px);
+    }
+  }
+
   .letter-revealed {
     font-size: calc(var(--cell-size, 50px) * 0.45);
   }
-  
+
   .cell-number {
     font-size: calc(var(--cell-size, 50px) * 0.18);
     width: calc(var(--cell-size, 50px) * 0.25);

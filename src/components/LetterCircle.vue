@@ -7,16 +7,21 @@
         :height="circleSize"
         :viewBox="`0 0 ${circleSize} ${circleSize}`"
       >
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #42a5f5; stop-opacity: 1" />
+            <stop offset="100%" style="stop-color: #1e88e5; stop-opacity: 1" />
+          </linearGradient>
+        </defs>
         <path
           v-if="connectionPath"
           :d="connectionPath"
-          stroke="#42a5f5"
-          stroke-width="6"
+          stroke-width="5"
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
           class="connection-path"
-          opacity="0.9"
+          opacity="0.95"
         />
       </svg>
 
@@ -396,13 +401,16 @@ onUnmounted(() => {
 <style scoped>
 .letter-circle-container {
   position: relative;
-  width: min(85vw, 400px);
-  height: min(85vw, 400px);
+  width: min(80vw, 350px);
+  height: min(80vw, 350px);
   margin: 0 auto;
   touch-action: none;
   user-select: none;
   /* Ensure consistent aspect ratio */
   aspect-ratio: 1;
+  /* Performance optimization */
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .letter-circle {
@@ -410,10 +418,16 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--shadow-primary);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .connection-lines {
@@ -424,57 +438,70 @@ onUnmounted(() => {
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  /* Performance optimization */
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .connection-path {
-  filter: drop-shadow(0 0 10px rgba(66, 165, 245, 0.8));
-  transition: all 0.1s ease-out;
+  filter: drop-shadow(0 0 8px rgba(66, 165, 245, 0.6));
+  /* Remove transition for smoother drawing */
+  stroke: url(#gradient);
 }
 
 .letter-item {
   position: absolute;
-  width: clamp(50px, 12vw, 80px);
-  height: clamp(50px, 12vw, 80px);
+  width: clamp(45px, 11vw, 70px);
+  height: clamp(45px, 11vw, 70px);
   cursor: pointer;
   z-index: 2;
-  transition: all 0.2s ease;
   user-select: none;
   touch-action: none;
-  /* Reduced padding for more precise touch detection */
-  padding: clamp(3px, 1vw, 6px);
-  margin: calc(-1 * clamp(3px, 1vw, 6px));
+  /* Performance optimization */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .letter-content {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: linear-gradient(45deg, var(--accent-color), var(--accent-color));
-  color: var(--text-primary);
-  font-size: clamp(1.2rem, 3.5vw, 2rem);
-  font-weight: bold;
+  background: linear-gradient(135deg, #5e72e4 0%, #4c63d2 100%);
+  color: white;
+  font-size: clamp(1.1rem, 3vw, 1.8rem);
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-primary);
-  transition: all 0.3s ease;
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .letter-selected .letter-content {
-  background: linear-gradient(45deg, var(--success-color), var(--success-color));
-  transform: scale(1.1);
-  box-shadow: var(--shadow-glow);
-  animation: glow 2s ease-in-out infinite alternate;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  transform: scale(1.15);
+  box-shadow:
+    0 6px 25px rgba(76, 175, 80, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .letter-connecting .letter-content {
-  background: linear-gradient(45deg, #ff9800, #f57c00);
-  transform: scale(1.05);
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  transform: scale(1.08);
+  box-shadow: 0 5px 20px rgba(255, 152, 0, 0.3);
 }
 
 .letter-item:hover .letter-content {
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(66, 165, 245, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 5px 20px rgba(94, 114, 228, 0.3);
 }
 
 .letter-drawing .letter-content {
@@ -497,6 +524,18 @@ onUnmounted(() => {
   animation: letterPulse 0.3s ease-out;
 }
 
+@keyframes letterPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1.15);
+  }
+}
+
 .letter-glow {
   position: absolute;
   top: -5px;
@@ -513,49 +552,63 @@ onUnmounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 250, 250, 0.9) 100%);
   border-radius: 50%;
-  width: clamp(80px, 20vw, 120px);
-  height: clamp(80px, 20vw, 120px);
+  width: clamp(75px, 18vw, 110px);
+  height: clamp(75px, 18vw, 110px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   z-index: 3;
+  backdrop-filter: blur(10px);
 }
 
 .center-word {
-  font-size: clamp(0.9rem, 2.5vw, 1.3rem);
-  font-weight: bold;
-  color: #333;
-  margin-bottom: clamp(4px, 1vw, 8px);
+  font-size: clamp(0.85rem, 2.3vw, 1.2rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #4c63d2 0%, #5e72e4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: clamp(3px, 0.8vw, 6px);
   text-align: center;
   line-height: 1;
-  max-width: 90%;
+  max-width: 85%;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .submit-button {
-  width: 35px;
-  height: 35px;
-  min-height: 35px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
+  box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
 }
 
 .shuffle-center {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
 .shuffle-button {
-  width: 45px;
-  height: 45px;
-  min-height: 45px;
-  background: rgba(156, 39, 176, 0.95) !important;
-  box-shadow: 0 4px 20px rgba(156, 39, 176, 0.4);
-  transition: all 0.3s ease;
+  width: 50px;
+  height: 50px;
+  min-height: 50px;
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%) !important;
+  box-shadow: 0 5px 20px rgba(156, 39, 176, 0.4);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .shuffle-button:hover {
