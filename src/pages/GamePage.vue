@@ -16,19 +16,22 @@
     />
 
     <!-- Main Game Area -->
-    <GameArena
-      :current-level="currentLevel"
-      :found-words="foundWords"
-      :shuffled-letters="shuffledLetters"
-      :connected-letter-indices="connectedLetterIndices"
-      :current-word="currentWord"
-      :is-hint-reveal="isHintReveal"
-      :is-shuffling="isShuffling"
-      @letter-selection="handleLetterSelection"
-      @word-submitted="handleWordSubmission"
-      @letters-cleared="handleLettersClear"
-      @shuffle-letters="shuffleLetters"
-    />
+    <div class="game-area-wrapper">
+      <GameArena
+        :key="currentLevel?.id || 'game-arena'"
+        :current-level="currentLevel"
+        :found-words="foundWords"
+        :shuffled-letters="shuffledLetters"
+        :connected-letter-indices="connectedLetterIndices"
+        :current-word="currentWord"
+        :is-hint-reveal="isHintReveal"
+        :is-shuffling="isShuffling"
+        @letter-selection="handleLetterSelection"
+        @word-submitted="handleWordSubmission"
+        @letters-cleared="handleLettersClear"
+        @shuffle-letters="shuffleLetters"
+      />
+    </div>
 
     <!-- Success Celebration -->
     <SuccessDialog
@@ -232,12 +235,11 @@ const shuffleLetters = async () => {
 
   await triggerHapticFeedback(ImpactStyle.Light);
   if (currentLevel) {
-    // Use nextTick to ensure smooth transition
-    const newOrder = shuffleArray(currentLevel.letters);
+    // Create a shuffled copy
+    const newOrder = shuffleArray([...shuffledLetters.value]);
 
-    // Small delay to prevent flash
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    shuffledLetters.value = newOrder;
+    // Update the array in-place to avoid full re-render
+    shuffledLetters.value.splice(0, shuffledLetters.value.length, ...newOrder);
 
     // Reset flag after animation completes (300ms transition)
     setTimeout(() => {
@@ -291,6 +293,25 @@ watch(
   bottom: 0;
   display: flex;
   flex-direction: column;
+  /* Prevent white flashes during re-renders */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Game Area Wrapper - Prevents re-render flashes */
+.game-area-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  /* Force GPU acceleration */
+  transform: translateZ(0);
+  will-change: contents;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Prevent white background during transitions */
+  background: var(--primary-bg);
+  isolation: isolate;
 }
 
 /* iOS safe area adjustments */

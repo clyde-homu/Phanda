@@ -417,6 +417,11 @@ onUnmounted(() => {
   margin: 0 auto;
   touch-action: none;
   user-select: none;
+  /* Prevent white flashes during shuffles */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: contents;
   /* Ensure consistent aspect ratio */
   aspect-ratio: 1;
   /* Performance optimization */
