@@ -1,5 +1,3 @@
 # Ignore Capacitor build directory
 src-capacitor/
-
-src/pages/LevelSelectionPage.vue
 node_modules
