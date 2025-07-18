@@ -62,6 +62,18 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
     },
     {
       id: 2,
+      name: 'Mzansi Taal',
+      letters: ['A', 'N', 'A', 'C', 'O', 'D', 'A', 'N', 'G', 'A'],
+      crosswordGrid: [],
+      targetWords: ['ANACONDA', 'AND', 'CANADA', 'CAN', 'GOD', 'COD'],
+      isUnlocked: false,
+      isCompleted: false,
+      stars: 0,
+      landmark: 'pyramid.jpg',
+      language: 'english',
+    },
+    {
+      id: 3,
       name: 'Johannesburg - Gold Reef City',
       letters: ['L', 'O', 'V', 'E', 'R'],
       crosswordGrid: [],
@@ -73,7 +85,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 3,
+      id: 4,
       name: 'Durban - Golden Mile',
       letters: ['S', 'U', 'N', 'M', 'O', 'R'],
       crosswordGrid: [],
@@ -85,7 +97,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 4,
+      id: 5,
       name: 'Pretoria - Union Buildings',
       letters: ['F', 'L', 'O', 'W', 'E', 'R'],
       crosswordGrid: [],
@@ -97,7 +109,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 5,
+      id: 6,
       name: 'Bloemfontein - Naval Hill',
       letters: ['M', 'A', 'G', 'I', 'C', 'K'],
       crosswordGrid: [],
@@ -109,7 +121,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 6,
+      id: 7,
       name: 'Port Elizabeth - Beachfront',
       letters: ['S', 'T', 'A', 'R', 'T'],
       crosswordGrid: [],
@@ -121,7 +133,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 7,
+      id: 8,
       name: 'Kimberley - Big Hole',
       letters: ['H', 'E', 'A', 'R', 'T'],
       crosswordGrid: [],
@@ -133,7 +145,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 8,
+      id: 9,
       name: 'Nelspruit - Kruger Park',
       letters: ['G', 'R', 'E', 'A', 'T'],
       crosswordGrid: [],
@@ -145,7 +157,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 9,
+      id: 10,
       name: 'East London - Orient Beach',
       letters: ['W', 'O', 'R', 'L', 'D'],
       crosswordGrid: [],
@@ -157,7 +169,7 @@ export const GAME_LEVELS: Record<string, GameLevel[]> = {
       language: 'english',
     },
     {
-      id: 10,
+      id: 11,
       name: 'Polokwane - Game Reserve',
       letters: ['P', 'E', 'A', 'C', 'E'],
       crosswordGrid: [],
