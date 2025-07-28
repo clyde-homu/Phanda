@@ -3,42 +3,38 @@
     <q-card class="theme-card glass">
       <q-card-section class="theme-header">
         <div class="theme-title">
-          <q-icon name="palette" size="md" />
-          <h3>Choose Your Adventure</h3>
+          <q-icon name="auto_awesome" size="md" />
+          <h3>UNISA Academic Theme</h3>
         </div>
         <q-btn flat round icon="close" @click="showDialog = false" />
       </q-card-section>
 
-      <q-card-section class="theme-grid">
-        <div
-          v-for="theme in themeStore.themes"
-          :key="theme.id"
-          class="theme-option"
-          :class="{
-            'theme-selected': theme.id === themeStore.currentTheme,
-            'theme-locked': !theme.unlocked,
-          }"
-          @click="selectTheme(theme)"
-        >
-          <div class="theme-preview" :style="{ background: theme.preview }">
+      <q-card-section class="theme-showcase">
+        <div class="current-theme-display">
+          <div class="theme-preview-large flame-glow" :style="{ background: currentTheme.preview }">
             <div class="theme-overlay">
-              <div class="theme-icon">{{ theme.icon }}</div>
-              <div v-if="!theme.unlocked" class="lock-icon">
-                <q-icon name="lock" size="sm" />
-              </div>
-              <div v-if="theme.id === themeStore.currentTheme" class="selected-icon">
-                <q-icon name="check_circle" size="sm" color="white" />
+              <div class="theme-icon-large">{{ currentTheme.icon }}</div>
+              <div class="active-indicator">
+                <q-icon name="check_circle" size="lg" />
               </div>
             </div>
           </div>
 
-          <div class="theme-info">
-            <div class="theme-name">{{ theme.name }}</div>
-            <div class="theme-description">{{ theme.description }}</div>
-            <div v-if="!theme.unlocked && theme.unlockLevel" class="unlock-requirement">
-              Unlock at Level {{ theme.unlockLevel }}
+          <div class="theme-details">
+            <div class="theme-name-large">{{ currentTheme.name }}</div>
+            <div class="theme-description-large">{{ currentTheme.description }}</div>
+            <div class="theme-features">
+              <div class="feature-tag flame-glow">🟠 UNISA Orange</div>
+              <div class="feature-tag water-glow">🔵 UNISA Blue</div>
+              <div class="feature-tag">✨ Particle Effects</div>
+              <div class="feature-tag">💎 Glass Morphism</div>
             </div>
           </div>
+        </div>
+
+        <div class="theme-message">
+          <q-icon name="info" size="sm" />
+          <span>This is the ultimate theme crafted specifically for the best gaming experience!</span>
         </div>
       </q-card-section>
 
@@ -46,10 +42,9 @@
         <q-btn
           push
           color="primary"
-          label="Apply Theme"
-          @click="applyTheme"
-          class="interactive-button"
-          :disable="!selectedTheme"
+          label="Awesome! Close"
+          @click="showDialog = false"
+          class="interactive-button flame-glow"
         />
       </q-card-actions>
     </q-card>
@@ -57,9 +52,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useThemeStore, type Theme } from '../stores/theme-store';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { computed } from 'vue';
+import { useThemeStore } from '../stores/theme-store';
 
 interface Props {
   modelValue: boolean;
@@ -74,39 +68,19 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const themeStore = useThemeStore();
-const selectedTheme = ref<string>(themeStore.currentTheme);
 
 const showDialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value),
 });
 
-const triggerHapticFeedback = async (style: ImpactStyle = ImpactStyle.Light) => {
-  try {
-    await Haptics.impact({ style });
-  } catch {
-    console.log('Haptics not available');
-  }
-};
-
-const selectTheme = async (theme: Theme) => {
-  if (!theme.unlocked) {
-    await triggerHapticFeedback(ImpactStyle.Heavy);
-    return;
-  }
-
-  await triggerHapticFeedback(ImpactStyle.Light);
-  selectedTheme.value = theme.id;
-};
-
-const applyTheme = async () => {
-  if (selectedTheme.value) {
-    await triggerHapticFeedback(ImpactStyle.Medium);
-    themeStore.setTheme(selectedTheme.value);
-    emit('theme-changed', selectedTheme.value);
-    showDialog.value = false;
-  }
-};
+// Get current theme data with fallback
+const currentTheme = computed(() => themeStore.currentThemeData || {
+  name: 'UNISA Academic',
+  description: 'Professional blue representing trust and intellect, with vibrant orange for innovation and creativity',
+  icon: '🎓📚',
+  preview: 'linear-gradient(135deg, #001a4d 0%, #003d82 50%, #ff6600 100%)',
+});
 </script>
 
 <style scoped>
@@ -144,54 +118,25 @@ const applyTheme = async () => {
   font-weight: 600;
 }
 
-.theme-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+.theme-showcase {
   padding: 20px;
-  max-height: 60vh;
-  overflow-y: auto;
 }
 
-.theme-option {
+.current-theme-display {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid transparent;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.theme-option:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.theme-selected {
-  border-color: var(--accent-color);
-  background: rgba(66, 165, 245, 0.1);
-}
-
-.theme-locked {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.theme-locked:hover {
-  transform: none;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.theme-preview {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+.theme-preview-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
-  flex-shrink: 0;
+  border: 3px solid var(--fire-secondary);
 }
 
 .theme-overlay {
@@ -200,50 +145,79 @@ const applyTheme = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
 }
 
-.theme-icon {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+.theme-icon-large {
+  font-size: 36px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
 }
 
-.lock-icon,
-.selected-icon {
+.active-indicator {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: rgba(0, 0, 0, 0.7);
+  top: 8px;
+  right: 8px;
+  color: var(--fire-light);
+  background: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.theme-info {
-  flex: 1;
+.theme-details {
+  text-align: center;
   color: var(--text-primary);
 }
 
-.theme-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 4px;
+.theme-name-large {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: var(--fire-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.theme-description {
-  font-size: 0.9rem;
+.theme-description-large {
+  font-size: 1rem;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 16px;
+  line-height: 1.4;
 }
 
-.unlock-requirement {
-  font-size: 0.8rem;
-  color: var(--warning-color);
+.theme-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.feature-tag {
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  font-size: 0.85rem;
   font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.theme-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--glass-bg-intense);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  backdrop-filter: blur(15px);
 }
 
 .theme-actions {
@@ -259,26 +233,35 @@ const applyTheme = async () => {
   text-transform: none;
 }
 
-@media (min-width: 600px) {
-  .theme-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 @media (max-width: 480px) {
   .theme-card {
     width: 95vw;
   }
 
-  .theme-option {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
+  .theme-showcase {
+    padding: 15px;
   }
 
-  .theme-preview {
-    width: 80px;
-    height: 80px;
+  .theme-preview-large {
+    width: 100px;
+    height: 100px;
+  }
+
+  .theme-icon-large {
+    font-size: 28px;
+  }
+
+  .theme-name-large {
+    font-size: 1.3rem;
+  }
+
+  .theme-description-large {
+    font-size: 0.9rem;
+  }
+
+  .feature-tag {
+    font-size: 0.8rem;
+    padding: 4px 8px;
   }
 }
 </style>

@@ -1,5 +1,11 @@
 {
   "appId": "org.phanda.com",
   "appName": "phanda",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "allowNavigation": [
+      "localhost"
+    ]
+  }
 }

@@ -1,3 +1,0 @@
-# Ignore Capacitor build directory
-src-capacitor/
-node_modules

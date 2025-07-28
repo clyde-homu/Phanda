@@ -1,0 +1,13 @@
+# Ignore backend folder
+phanda-backend/
+
+# Ignore build directories
+dist/
+src-capacitor/
+node_modules/
+
+# Ignore common files
+*.log
+*.lock
+package-lock.json
+yarn.lock

@@ -250,30 +250,28 @@ defineExpose({
   }
 }
 
-/* Theme-specific particle effects */
-[data-theme='ocean'] .particle {
-  background: radial-gradient(circle, rgba(0, 188, 212, 0.8), rgba(0, 150, 136, 0.6));
-  box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+/* Enhanced particle effects for Blue & Orange theme */
+.particle {
+  background: radial-gradient(circle, var(--fire-secondary), var(--fire-primary));
+  box-shadow: 0 0 15px var(--fire-secondary);
 }
 
-[data-theme='forest'] .particle {
-  background: radial-gradient(circle, rgba(76, 175, 80, 0.8), rgba(139, 195, 74, 0.6));
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+/* Alternating particle styles for visual variety */
+.particle:nth-child(3n) {
+  background: radial-gradient(circle, var(--water-secondary), var(--water-primary));
+  box-shadow: 0 0 12px var(--water-secondary);
 }
 
-[data-theme='sunset'] .particle {
-  background: radial-gradient(circle, rgba(255, 87, 34, 0.8), rgba(255, 193, 7, 0.6));
-  box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+.particle:nth-child(5n) {
+  background: var(--fire-gradient);
+  box-shadow: 0 0 18px var(--fire-secondary);
+  animation-duration: 9s;
 }
 
-[data-theme='galaxy'] .particle {
-  background: radial-gradient(circle, rgba(233, 30, 99, 0.8), rgba(156, 39, 176, 0.6));
-  box-shadow: 0 0 15px rgba(233, 30, 99, 0.7);
-}
-
-[data-theme='neon'] .particle {
-  background: radial-gradient(circle, rgba(0, 255, 255, 0.9), rgba(0, 255, 0, 0.7));
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+.particle:nth-child(7n) {
+  background: var(--water-gradient);
+  box-shadow: 0 0 10px var(--water-secondary);
+  animation-duration: 11s;
 }
 
 /* Reduced motion support */

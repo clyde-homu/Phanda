@@ -1,107 +1,155 @@
-// ===== PHANDA GAME THEMES =====
-// Interactive and Amazing Theme System
+// ===== PHANDA GAME THEME =====
+// UNISA Blue & Orange Theme - Academic Excellence & Innovation!
 
-// Theme Variables
+// Theme Variables - UNISA Academic Blue with Vibrant Orange
 :root {
-  // Default Theme - Cosmic Purple
-  --primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --secondary-bg: rgba(255, 255, 255, 0.1);
-  --accent-color: #42a5f5;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
+  // Primary Background - UNISA Deep Blue Gradient
+  --primary-bg: linear-gradient(135deg, #001a4d 0%, #003366 25%, #003d82 50%, #0052a0 75%, #0066cc 100%);
+  
+  // Secondary Background - Subtle UNISA Blue Glass
+  --secondary-bg: rgba(0, 61, 130, 0.12);
+  
+  // Accent Color - UNISA Orange for highlights and interactions
+  --accent-color: #ff6600;
+  
+  // Status Colors
+  --success-color: #10b981; // Green for success
+  --warning-color: #f59e0b; // Amber for warnings
+  --error-color: #ef4444;   // Red for errors
+  
+  // Text Colors
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --glass-bg: rgba(255, 255, 255, 0.15);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --shadow-primary: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(66, 165, 245, 0.4);
-  --particle-color: rgba(255, 255, 255, 0.6);
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-accent: #ffcc99; // Light UNISA orange for special text
+  
+  // Glass Morphism Effects
+  --glass-bg: rgba(0, 61, 130, 0.15);
+  --glass-border: rgba(255, 102, 0, 0.25);
+  --glass-bg-intense: rgba(0, 61, 130, 0.25);
+  
+  // Shadow Effects
+  --shadow-primary: 0 8px 32px rgba(0, 61, 130, 0.4);
+  --shadow-glow: 0 0 30px rgba(255, 102, 0, 0.6); // UNISA Orange glow
+  --shadow-glow-intense: 0 0 40px rgba(255, 102, 0, 0.8); // Intense UNISA orange glow
+  --shadow-blue: 0 0 25px rgba(0, 61, 130, 0.5); // UNISA Blue glow for variety
+  
+  // Particle Effects
+  --particle-color: rgba(255, 102, 0, 0.7); // UNISA Orange particles
+  --particle-color-alt: rgba(0, 61, 130, 0.6); // UNISA Blue particles for variety
+  
+  // UNISA Orange Colors for Special Elements
+  --fire-primary: #cc4400;   // Deep UNISA orange
+  --fire-secondary: #ff6600; // Bright UNISA orange  
+  --fire-light: #ffcc99;     // Light UNISA orange
+  --fire-gradient: linear-gradient(45deg, #cc4400 0%, #ff6600 50%, #ff7700 100%);
+  
+  // UNISA Blue Colors for Contrast
+  --water-primary: #003366;  // Deep UNISA blue
+  --water-secondary: #003d82; // Bright UNISA blue
+  --water-light: #cce6ff;     // Light UNISA blue
+  --water-gradient: linear-gradient(45deg, #001a4d 0%, #003d82 50%, #0052a0 100%);
 }
 
-// Ocean Theme
-[data-theme='ocean'] {
-  --primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --secondary-bg: rgba(255, 255, 255, 0.1);
-  --accent-color: #00bcd4;
-  --success-color: #009688;
-  --warning-color: #ff7043;
-  --error-color: #e91e63;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --glass-bg: rgba(0, 188, 212, 0.15);
-  --glass-border: rgba(0, 188, 212, 0.3);
-  --shadow-primary: 0 8px 32px rgba(0, 188, 212, 0.3);
-  --shadow-glow: 0 0 25px rgba(0, 188, 212, 0.5);
-  --particle-color: rgba(0, 188, 212, 0.7);
+// ===== ENHANCED FLAME EFFECTS =====
+
+// Fire Glow Animation - for flamed elements
+@keyframes fireGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px var(--fire-secondary),
+      0 0 40px var(--fire-primary),
+      0 0 60px var(--fire-secondary);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    box-shadow: 
+      0 0 25px var(--fire-primary),
+      0 0 45px var(--fire-secondary),
+      0 0 65px var(--fire-primary);
+    filter: hue-rotate(5deg);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px var(--fire-secondary),
+      0 0 50px var(--fire-primary),
+      0 0 70px var(--fire-secondary);
+    filter: hue-rotate(-5deg);
+  }
+  75% {
+    box-shadow: 
+      0 0 22px var(--fire-primary),
+      0 0 42px var(--fire-secondary),
+      0 0 62px var(--fire-primary);
+    filter: hue-rotate(3deg);
+  }
 }
 
-// Forest Theme
-[data-theme='forest'] {
-  --primary-bg: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
-  --secondary-bg: rgba(255, 255, 255, 0.15);
-  --accent-color: #4caf50;
-  --success-color: #8bc34a;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --glass-bg: rgba(76, 175, 80, 0.15);
-  --glass-border: rgba(76, 175, 80, 0.3);
-  --shadow-primary: 0 8px 32px rgba(76, 175, 80, 0.3);
-  --shadow-glow: 0 0 25px rgba(76, 175, 80, 0.5);
-  --particle-color: rgba(139, 195, 74, 0.7);
+// Intense Fire Effect for special elements
+@keyframes blazeIntense {
+  0%, 100% {
+    box-shadow: 
+      0 0 30px var(--fire-secondary),
+      0 0 60px var(--fire-primary),
+      0 0 90px var(--fire-secondary),
+      inset 0 0 20px rgba(249, 115, 22, 0.3);
+    background: var(--fire-gradient);
+  }
+  50% {
+    box-shadow: 
+      0 0 40px var(--fire-primary),
+      0 0 80px var(--fire-secondary),
+      0 0 120px var(--fire-primary),
+      inset 0 0 30px rgba(255, 102, 0, 0.5);
+    background: linear-gradient(45deg, #ff6600 0%, #cc4400 50%, #ff7700 100%);
+  }
 }
 
-// Sunset Theme
-[data-theme='sunset'] {
-  --primary-bg: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-  --secondary-bg: rgba(255, 255, 255, 0.15);
-  --accent-color: #ff5722;
-  --success-color: #4caf50;
-  --warning-color: #ffc107;
-  --error-color: #e91e63;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --glass-bg: rgba(255, 87, 34, 0.15);
-  --glass-border: rgba(255, 87, 34, 0.3);
-  --shadow-primary: 0 8px 32px rgba(255, 87, 34, 0.3);
-  --shadow-glow: 0 0 25px rgba(255, 87, 34, 0.5);
-  --particle-color: rgba(255, 193, 7, 0.7);
+// Water Ripple Effect for blue elements
+@keyframes waterRipple {
+  0%, 100% {
+    box-shadow: 
+      0 0 15px var(--water-secondary),
+      0 0 30px var(--water-primary),
+      0 0 45px var(--water-secondary);
+  }
+  50% {
+    box-shadow: 
+      0 0 20px var(--water-primary),
+      0 0 40px var(--water-secondary),
+      0 0 60px var(--water-primary);
+  }
 }
 
-// Galaxy Theme
-[data-theme='galaxy'] {
-  --primary-bg: linear-gradient(135deg, #2c1810 0%, #8b4a9c 50%, #1a0033 100%);
-  --secondary-bg: rgba(255, 255, 255, 0.1);
-  --accent-color: #e91e63;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --glass-bg: rgba(233, 30, 99, 0.15);
-  --glass-border: rgba(233, 30, 99, 0.3);
-  --shadow-primary: 0 8px 32px rgba(233, 30, 99, 0.3);
-  --shadow-glow: 0 0 30px rgba(233, 30, 99, 0.6);
-  --particle-color: rgba(233, 30, 99, 0.8);
+// Enhanced Glow Classes
+.flame-glow {
+  animation: fireGlow 3s ease-in-out infinite;
 }
 
-// Neon Theme
-[data-theme='neon'] {
-  --primary-bg: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-  --secondary-bg: rgba(0, 255, 255, 0.1);
-  --accent-color: #00ffff;
-  --success-color: #00ff00;
-  --warning-color: #ffff00;
-  --error-color: #ff0080;
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --glass-bg: rgba(0, 255, 255, 0.1);
-  --glass-border: rgba(0, 255, 255, 0.4);
-  --shadow-primary: 0 8px 32px rgba(0, 255, 255, 0.3);
-  --shadow-glow: 0 0 30px rgba(0, 255, 255, 0.8);
-  --particle-color: rgba(0, 255, 255, 0.9);
+.flame-intense {
+  animation: blazeIntense 2s ease-in-out infinite;
+}
+
+.water-glow {
+  animation: waterRipple 4s ease-in-out infinite;
+}
+
+// Override existing glow effects to use orange fire
+.letter-glow,
+.gems-glow,
+.intersection-glow,
+.check-glow,
+.landmark-glow,
+.hint-glow-effect,
+.section-glow {
+  background: var(--fire-gradient);
+  box-shadow: var(--shadow-glow);
+  animation: fireGlow 2s ease-in-out infinite;
+}
+
+// Specific intense glow for special elements
+.crossword-glow,
+.circle-glow {
+  animation: blazeIntense 3s ease-in-out infinite;
 }
 
 // ===== ANIMATIONS =====

@@ -251,8 +251,8 @@ const shuffleLetters = async () => {
 };
 
 const handleLevelComplete = async () => {
-  gameStore.completeLevel();
-  gameStore.saveProgress();
+  await gameStore.completeLevel();
+  gameStore.saveLocalProgress();
   showSuccessDialog.value = false;
   await router.push('/levels');
 };

@@ -41,8 +41,8 @@
                 outlined
                 dense
                 :rules="[
-                  (val) => !!val || 'Email is required',
-                  (val) => isValidEmail(val) || 'Invalid email format',
+                  val => !!val || 'Email is required',
+                  val => isValidEmail(val) || 'Invalid email format',
                 ]"
                 class="form-input"
               >
@@ -57,7 +57,7 @@
                 label="Password"
                 outlined
                 dense
-                :rules="[(val) => !!val || 'Password is required']"
+                :rules="[val => !!val || 'Password is required']"
                 class="form-input"
               >
                 <template v-slot:prepend>
@@ -112,8 +112,8 @@
                 outlined
                 dense
                 :rules="[
-                  (val) => !!val || 'Username is required',
-                  (val) => val.length >= 3 || 'Username must be at least 3 characters',
+                  val => !!val || 'Username is required',
+                  val => val.length >= 3 || 'Username must be at least 3 characters',
                 ]"
                 class="form-input"
               >
@@ -129,8 +129,8 @@
                 outlined
                 dense
                 :rules="[
-                  (val) => !!val || 'Email is required',
-                  (val) => isValidEmail(val) || 'Invalid email format',
+                  val => !!val || 'Email is required',
+                  val => isValidEmail(val) || 'Invalid email format',
                 ]"
                 class="form-input"
               >
@@ -146,8 +146,8 @@
                 outlined
                 dense
                 :rules="[
-                  (val) => !!val || 'Password is required',
-                  (val) => val.length >= 6 || 'Password must be at least 6 characters',
+                  val => !!val || 'Password is required',
+                  val => val.length >= 6 || 'Password must be at least 6 characters',
                 ]"
                 class="form-input"
               >
@@ -170,8 +170,8 @@
                 outlined
                 dense
                 :rules="[
-                  (val) => !!val || 'Please confirm your password',
-                  (val) => val === registerForm.password || 'Passwords do not match',
+                  val => !!val || 'Please confirm your password',
+                  val => val === registerForm.password || 'Passwords do not match',
                 ]"
                 class="form-input"
               >
@@ -303,6 +303,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game-store';
 import { useThemeStore } from '../stores/theme-store';
+import { useAuthStore } from '../stores/auth-store';
 import ParticleEffects from '../components/ParticleEffects.vue';
 import ThemeSelector from '../components/ThemeSelector.vue';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -310,6 +311,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 const router = useRouter();
 const gameStore = useGameStore();
 const themeStore = useThemeStore();
+const authStore = useAuthStore();
 
 const formMode = ref<'login' | 'register'>('login');
 const isLoading = ref(false);
@@ -366,64 +368,74 @@ const triggerHapticFeedback = async (style: ImpactStyle = ImpactStyle.Light) => 
   }
 };
 
-// Simulate login
+// Real login with API call
 const handleLogin = async () => {
   isLoading.value = true;
   await triggerHapticFeedback(ImpactStyle.Medium);
 
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  try {
+    const user = await authStore.login({
+      email: loginForm.value.email,
+      password: loginForm.value.password,
+    });
 
-  // Simulate successful login
-  if (loginForm.value.email && loginForm.value.password) {
     successMessage.value = 'Login Successful!';
     showSuccessDialog.value = true;
     isLoggedIn.value = true;
 
-    // Store user data (simulate)
-    localStorage.setItem(
-      'phanda-user',
-      JSON.stringify({
-        email: loginForm.value.email,
-        username: loginForm.value.email.split('@')[0],
-        loginTime: new Date().toISOString(),
-      }),
-    );
-
+    // Update game store with real user data
     gameStore.authenticateUser();
+    gameStore.updateUserProgress({
+      gems: user.totalGems,
+      hintsUsed: user.totalHintsUsed,
+    });
+
+    // Initialize store with API data
+    await gameStore.initializeStore();
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.';
+    console.error('Login failed:', error);
+    // Show error to user (you might want to add a notification system)
+    alert(errorMessage);
   }
 
   isLoading.value = false;
 };
 
-// Simulate registration
+// Real registration with API call
 const handleRegister = async () => {
   isLoading.value = true;
   await triggerHapticFeedback(ImpactStyle.Medium);
 
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  try {
+    const user = await authStore.register({
+      username: registerForm.value.username,
+      email: registerForm.value.email,
+      password: registerForm.value.password,
+    });
 
-  // Simulate successful registration
-  if (isRegisterFormValid.value) {
     successMessage.value = 'Account Created Successfully!';
     showSuccessDialog.value = true;
     isLoggedIn.value = true;
 
-    // Store user data (simulate)
-    localStorage.setItem(
-      'phanda-user',
-      JSON.stringify({
-        email: registerForm.value.email,
-        username: registerForm.value.username,
-        registrationTime: new Date().toISOString(),
-      }),
-    );
-
+    // Update game store with real user data
     gameStore.authenticateUser();
+    gameStore.updateUserProgress({
+      gems: user.totalGems,
+      hintsUsed: user.totalHintsUsed,
+    });
+
+    // Initialize store with API data
+    await gameStore.initializeStore();
 
     // Initialize new user progress
     gameStore.initializeNewUser();
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Registration failed. Please try again.';
+    console.error('Registration failed:', error);
+    // Show error to user (you might want to add a notification system)
+    alert(errorMessage);
   }
 
   isLoading.value = false;
@@ -436,7 +448,7 @@ const startGame = async () => {
 
 const proceedToGame = async () => {
   showSuccessDialog.value = false;
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 500));
   await startGame();
 };
 
@@ -445,14 +457,27 @@ const handleThemeChanged = (themeId: string) => {
 };
 
 // Check if user is already logged in
-onMounted(() => {
-  gameStore.loadProgress();
+onMounted(async () => {
   themeStore.initializeTheme();
 
-  const savedUser = localStorage.getItem('phanda-user');
-  if (savedUser) {
+  // Check if user is authenticated using auth store
+  if (authStore.isAuthenticated) {
     isLoggedIn.value = true;
     gameStore.authenticateUser();
+
+    // Update game store with user data from auth store
+    if (authStore.user) {
+      gameStore.updateUserProgress({
+        gems: authStore.user.totalGems,
+        hintsUsed: authStore.user.totalHintsUsed,
+      });
+    }
+
+    // Initialize store with API data
+    await gameStore.initializeStore();
+  } else {
+    // Load local progress for non-authenticated users
+    gameStore.loadLocalProgress();
   }
 });
 </script>

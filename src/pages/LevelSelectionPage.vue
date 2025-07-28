@@ -303,7 +303,7 @@
             </div>
             <div class="preview-stat">
               <q-icon name="language" color="blue" />
-              <span>{{ getLanguageName(selectedLevel?.language || '') }}</span>
+              <span>{{ getLanguageName(selectedLevel?.languageId || '') }}</span>
             </div>
           </div>
         </q-card-section>
@@ -333,15 +333,10 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game-store';
 import { useThemeStore } from '../stores/theme-store';
-import {
-  getUnlockedLevels,
-  getUnlockedLanguages,
-  AVAILABLE_LANGUAGES,
-} from '../stores/levels-data';
 import ThemeSelector from '../components/ThemeSelector.vue';
 import ParticleEffects from '../components/ParticleEffects.vue';
 import type { GameLevel } from '../stores/game-store';
-import type { Language } from '../stores/levels-data';
+import type { Language } from '../services/api';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 const router = useRouter();
@@ -359,22 +354,38 @@ const selectedLanguage = computed(() => {
 const currentLanguageProgress = computed(() => {
   const progress = gameStore.userProgress.languages[selectedLanguage.value] || {
     currentLevel: 1,
-    completedLevels: [],
+    completedLevels: [] as number[],
     totalStars: 0,
+    hintsUsed: 0,
   };
   return progress;
 });
 
 const allLanguages = computed(() => {
-  return getUnlockedLanguages();
+  return gameStore.languages.map(lang => ({
+    ...lang,
+    isUnlocked: true
+  }));
 });
 
 const availableLevels = computed(() => {
-  const levels = getUnlockedLevels(
-    selectedLanguage.value,
-    currentLanguageProgress.value.completedLevels,
+  const levels = gameStore.levels.filter(level => 
+    level.languageId === selectedLanguage.value
   );
-  return levels;
+  
+  return levels.map(level => ({
+    id: level.id,
+    languageId: level.languageId,
+    name: level.name,
+    letters: level.letters,
+    crosswordGrid: [],
+    targetWords: level.targetWords,
+    isUnlocked: level.orderIndex === 1 || currentLanguageProgress.value.completedLevels.includes(level.id - 1),
+    isCompleted: currentLanguageProgress.value.completedLevels.includes(level.id),
+    stars: 3, // Could be stored in progress data
+    landmark: 'pyramid.jpg', // Default landmark
+    orderIndex: level.orderIndex,
+  } as GameLevel));
 });
 
 const triggerHapticFeedback = async (style: ImpactStyle = ImpactStyle.Light) => {
@@ -454,7 +465,7 @@ const getEstimatedTime = (level: GameLevel | null): string => {
 };
 
 const getLanguageName = (languageId: string): string => {
-  return AVAILABLE_LANGUAGES.find((lang) => lang.id === languageId)?.name || languageId;
+  return gameStore.languages.find((lang) => lang.id === languageId)?.name || languageId;
 };
 
 const getLanguageStars = (languageId: string): number => {
@@ -510,8 +521,8 @@ watch(
   { immediate: false },
 );
 
-onMounted(() => {
-  gameStore.loadProgress();
+onMounted(async () => {
+  await gameStore.loadProgress();
   themeStore.checkThemeUnlocks(currentLanguageProgress.value.completedLevels.length);
 });
 </script>

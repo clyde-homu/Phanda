@@ -84,11 +84,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { GameLevel, UserProgress } from 'src/stores/game-store';
+import type { GameLevel, LocalUserProgress } from 'src/stores/game-store';
 
 interface Props {
   currentLevel: GameLevel | undefined;
-  userProgress: UserProgress;
+  userProgress: LocalUserProgress;
   foundWords: string[];
   isGameReady?: boolean;
   isProcessingHint?: boolean;

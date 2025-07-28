@@ -138,7 +138,7 @@ const showHintResultDialog = (title: string, message: string, icon: string, colo
   }, 2000)
 }
 
-const useRevealLetterHint = () => {
+const useRevealLetterHint = async () => {
   if (userProgress.gems < 20) {
     showHintResultDialog(
       'Not Enough Gems!', 
@@ -149,7 +149,7 @@ const useRevealLetterHint = () => {
     return
   }
   
-  if (gameStore.useHint()) {
+  if (await gameStore.useHint()) {
     // Find a random unrevealed word
     const unrevealedWords = props.targetWords?.filter(word => 
       !props.foundWords?.includes(word)
